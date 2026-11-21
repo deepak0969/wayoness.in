@@ -1,0 +1,3156 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Wayones Admin — Operations & Arbitration Console</title>
+
+  <!-- Inter Font -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
+          },
+          colors: {
+            obsidian: '#090F0D',
+            card: '#101A17',
+            panel: '#15231E',
+            borderc: '#1E332B',
+            mint: {
+              DEFAULT: '#00D084',
+              hover: '#00E694',
+              soft: 'rgba(0, 208, 132, 0.14)',
+            },
+            tealc: '#14B8A6',
+            amberc: '#F59E0B',
+            coral: '#EF4444',
+            crisp: '#FFFFFF',
+            muted: '#9AB8AC',
+          },
+          boxShadow: {
+            mint: '0 8px 26px -6px rgba(0, 208, 132, 0.42)',
+            amber: '0 8px 24px -6px rgba(245, 158, 11, 0.35)',
+            card: '0 12px 32px -12px rgba(0, 0, 0, 0.65)',
+          }
+        }
+      }
+    };
+  </script>
+
+  <style>
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    html, body {
+      background-color: #090F0D;
+      color: #FFFFFF;
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      overflow-x: hidden;
+      min-height: 100vh;
+    }
+    .tabular-nums { font-variant-numeric: tabular-nums; }
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #090F0D; }
+    ::-webkit-scrollbar-thumb { background: #1E332B; border-radius: 9999px; }
+    ::-webkit-scrollbar-thumb:hover { background: #00D084; }
+
+    .brand-grad {
+      background: linear-gradient(135deg, #00E694 0%, #00D084 55%, #14B8A6 100%);
+    }
+    .admin-glow {
+      background:
+        radial-gradient(circle at 88% 10%, rgba(0, 208, 132, 0.18), transparent 48%),
+        radial-gradient(circle at 12% 90%, rgba(245, 158, 11, 0.12), transparent 46%),
+        linear-gradient(155deg, #101E19 0%, #0A120F 100%);
+    }
+    @keyframes fadeSlideUp {
+      from { opacity: 0; transform: translateY(10px) scale(0.985); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    .anim-in { animation: fadeSlideUp 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+  </style>
+</head>
+
+<body class="bg-obsidian text-crisp antialiased selection:bg-mint/30 selection:text-white">
+
+  <!-- ==================== TOAST HOST ==================== -->
+  <div id="toast-host" class="fixed top-4 right-4 left-4 sm:left-auto sm:w-96 z-[250] flex flex-col gap-2 pointer-events-none"></div>
+
+  <!-- ==================== FULL-SCREEN APP ROOT ==================== -->
+  <div id="console-shell" class="min-h-screen"></div>
+
+  <!-- ==================== MODAL & DRAWER HOST ==================== -->
+  <div id="modal-root"></div>
+
+  <!-- ==================== LIGHTBOX HOST ==================== -->
+  <div id="lightbox-root"></div>
+
+  <!-- ==================== CONFIRMATION DIALOG HOST ==================== -->
+  <div id="confirm-root"></div>
+
+  <!-- ==================== WAYONES ADMIN APPLICATION (FIREBASE v11.0.2) ==================== -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
+    import {
+      getAuth,
+      GoogleAuthProvider,
+      signInWithPopup,
+      signInWithRedirect,
+      getRedirectResult,
+      onAuthStateChanged,
+      signOut
+    } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
+    import {
+      getFirestore,
+      doc,
+      setDoc,
+      getDoc,
+      updateDoc,
+      deleteDoc,
+      addDoc,
+      collection,
+      onSnapshot,
+      serverTimestamp
+    } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
+
+    /* =========================================================================
+       1. EXACT FIREBASE CONFIGURATION (WAYONES-595FB)
+       ========================================================================= */
+    const firebaseConfig = {
+      apiKey: "AIzaSyD6Tk4XvqtQnRxu6F9qV2oeZpBt_Nskh9Y",
+      authDomain: "wayones-595fb.firebaseapp.com",
+      projectId: "wayones-595fb",
+      storageBucket: "wayones-595fb.firebasestorage.app",
+      messagingSenderId: "899914086607",
+      appId: "1:899914086607:web:8ddacb6f556c274ab15fba"
+    };
+
+    let firebaseApp = null;
+    let auth = null;
+    let db = null;
+    let googleProvider = null;
+
+    try {
+      firebaseApp = initializeApp(firebaseConfig);
+      auth = getAuth(firebaseApp);
+      db = getFirestore(firebaseApp);
+      googleProvider = new GoogleAuthProvider();
+      googleProvider.setCustomParameters({ prompt: "select_account" });
+    } catch (err) {
+      console.warn("Firebase init notice:", err);
+    }
+
+    const SHARED_LS_KEY = "wayones_shared_db_v2";
+    const ADMIN_CFG_KEY = "wayones_admin_cfg_v2";
+    const ADMIN_LOGS_KEY = "wayones_admin_logs_v2";
+    const BROADCAST_NAME = "wayones_live_sync_v1";
+
+    /* =========================================================================
+       2. CRYPTOCURRENCY CATALOG & INLINE VECTOR SVG LOGOS (8 COINS)
+       ========================================================================= */
+    const COINS = {
+      USDT: { symbol: "USDT", name: "Tether USD", priceUSD: 1.00, decimals: 2 },
+      USDC: { symbol: "USDC", name: "USD Coin", priceUSD: 1.00, decimals: 2 },
+      BTC:  { symbol: "BTC",  name: "Bitcoin", priceUSD: 94850.00, decimals: 6 },
+      ETH:  { symbol: "ETH",  name: "Ethereum", priceUSD: 3220.00, decimals: 5 },
+      BNB:  { symbol: "BNB",  name: "BNB Smart Chain", priceUSD: 642.00, decimals: 4 },
+      SOL:  { symbol: "SOL",  name: "Solana", priceUSD: 218.00, decimals: 4 },
+      TRX:  { symbol: "TRX",  name: "TRON", priceUSD: 0.245, decimals: 2 },
+      TON:  { symbol: "TON",  name: "Toncoin", priceUSD: 5.65, decimals: 3 },
+    };
+
+    const FIAT_RATES_USD = {
+      INR: { symbol: "₹", rate: 86.30 },
+      USD: { symbol: "$", rate: 1.00 },
+      EUR: { symbol: "€", rate: 0.92 },
+      AED: { symbol: "د.إ", rate: 3.67 },
+      NGN: { symbol: "₦", rate: 1585.00 },
+      BRL: { symbol: "R$", rate: 5.76 },
+      GBP: { symbol: "£", rate: 0.79 },
+      PKR: { symbol: "₨", rate: 278.50 },
+      TRY: { symbol: "₺", rate: 34.80 },
+      PHP: { symbol: "₱", rate: 58.60 },
+      VND: { symbol: "₫", rate: 25420.00 },
+      IDR: { symbol: "Rp", rate: 15920.00 }
+    };
+
+    function cryptoLogoSvg(symbol, size = 26) {
+      const s = Number(size);
+      const gid = `sol_${Math.random().toString(36).slice(2, 7)}`;
+      const icons = {
+        USDT: `<svg width="${s}" height="${s}" viewBox="0 0 32 32" class="shrink-0"><circle cx="16" cy="16" r="15.5" fill="#00A67E"/><path d="M17.8 14.3V11.8h5.2V8.8H9v3h5.2v2.5c-4.1.2-7.2 1-7.2 2s3.1 1.8 7.2 2v6.1h3.6v-6.1c4.1-.2 7.2-1 7.2-2s-3.1-1.8-7.2-2zm0 3.3c-.2 0-1 .1-1.8.1-.9 0-1.6-.1-1.8-.1-3.3-.2-5.7-.7-5.7-1.3s2.4-1.1 5.7-1.3v2.1c.2 0 1 .1 1.8.1.9 0 1.6-.1 1.8-.1V15c3.3.2 5.7.7 5.7 1.3s-2.4 1.1-5.7 1.3z" fill="#FFFFFF"/></svg>`,
+        USDC: `<svg width="${s}" height="${s}" viewBox="0 0 32 32" class="shrink-0"><circle cx="16" cy="16" r="15.5" fill="#2775CA"/><circle cx="16" cy="16" r="11.5" fill="none" stroke="#FFFFFF" stroke-opacity="0.38" stroke-width="1.6"/><text x="16" y="21.5" text-anchor="middle" fill="#FFFFFF" font-size="15.5" font-weight="800" font-family="Inter,sans-serif">$</text></svg>`,
+        BTC:  `<svg width="${s}" height="${s}" viewBox="0 0 32 32" class="shrink-0"><circle cx="16" cy="16" r="15.5" fill="#F7931A"/><text x="16" y="21.8" text-anchor="middle" fill="#FFFFFF" font-size="16.5" font-weight="800" font-family="Inter,sans-serif">₿</text></svg>`,
+        ETH:  `<svg width="${s}" height="${s}" viewBox="0 0 32 32" class="shrink-0"><circle cx="16" cy="16" r="15.5" fill="#5B5CE6"/><path d="M16 5.6L9.5 16.2L16 19.9L22.5 16.2L16 5.6Z" fill="#FFFFFF"/><path d="M16 21.3L9.5 17.6L16 26.4L22.5 17.6L16 21.3Z" fill="#D5D7FF"/></svg>`,
+        BNB:  `<svg width="${s}" height="${s}" viewBox="0 0 32 32" class="shrink-0"><circle cx="16" cy="16" r="15.5" fill="#F3BA2F"/><path d="M16 7.8L11.4 12.4L13.5 14.5L16 12L18.5 14.5L20.6 12.4L16 7.8ZM9.2 14.6L7.1 16.7L9.2 18.8L11.3 16.7L9.2 14.6ZM22.8 14.6L20.7 16.7L22.8 18.8L24.9 16.7L22.8 14.6ZM16 14.3L13.8 16.5L16 18.7L18.2 16.5L16 14.3ZM16 24.2L20.6 19.6L18.5 17.5L16 20L13.5 17.5L11.4 19.6L16 24.2Z" fill="#090F0D"/></svg>`,
+        SOL:  `<svg width="${s}" height="${s}" viewBox="0 0 32 32" class="shrink-0"><defs><linearGradient id="${gid}" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#00FFA3"/><stop offset="100%" stop-color="#9945FF"/></linearGradient></defs><circle cx="16" cy="16" r="15.5" fill="#131E1B" stroke="#1E332B"/><path d="M9.2 21.2h11.2l2.4-2.4H11.6l-2.4 2.4zm0-6.8h11.2l2.4 2.4H11.6l-2.4-2.4zm13.6-2.4H11.6L9.2 9.6h11.2l2.4 2.4z" fill="url(#${gid})"/></svg>`,
+        TRX:  `<svg width="${s}" height="${s}" viewBox="0 0 32 32" class="shrink-0"><circle cx="16" cy="16" r="15.5" fill="#EB0029"/><path d="M8.5 9.2L23.8 12.3L15.4 24.5L8.5 9.2ZM11.3 11.3L15.4 20.6L20.8 13.1L11.3 11.3Z" fill="#FFFFFF"/></svg>`,
+        TON:  `<svg width="${s}" height="${s}" viewBox="0 0 32 32" class="shrink-0"><circle cx="16" cy="16" r="15.5" fill="#0098EA"/><path d="M10.1 10.4H21.9C22.9 10.4 23.5 11.5 23 12.4L16.9 23.2C16.5 23.9 15.5 23.9 15.1 23.2L9 12.4C8.5 11.5 9.1 10.4 10.1 10.4ZM15.2 12.2H11.3L15.2 19.3V12.2ZM16.8 12.2V19.3L20.7 12.2H16.8Z" fill="#FFFFFF"/></svg>`
+      };
+      return icons[symbol] || icons.USDT;
+    }
+
+    function googleGIconSvg(size = 20) {
+      return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" class="shrink-0" aria-hidden="true">
+        <path fill="#4285F4" d="M23.49 12.27c0-.79-.07-1.55-.2-2.27H12v4.3h6.45c-.28 1.48-1.12 2.74-2.38 3.58v2.98h3.85c2.25-2.07 3.57-5.12 3.57-8.59z"/>
+        <path fill="#34A853" d="M12 24c3.24 0 5.95-1.07 7.93-2.91l-3.85-2.98c-1.07.72-2.44 1.15-4.08 1.15-3.14 0-5.8-2.12-6.75-4.97H1.28v3.08C3.25 21.29 7.31 24 12 24z"/>
+        <path fill="#FBBC05" d="M5.25 14.29c-.24-.72-.38-1.49-.38-2.29s.14-1.57.38-2.29V6.63H1.28C.47 8.24 0 10.06 0 12s.47 3.76 1.28 5.37l3.97-3.08z"/>
+        <path fill="#EA4335" d="M12 4.75c1.76 0 3.34.61 4.58 1.79l3.44-3.44C17.95 1.19 15.24 0 12 0 7.31 0 3.25 2.71 1.28 6.63l3.97 3.08c.95-2.85 3.61-4.96 6.75-4.96z"/>
+      </svg>`;
+    }
+
+    function wayonesMonogramSvg(size = 20) {
+      return `<svg width="${size}" height="${size}" viewBox="0 0 28 28" fill="none" aria-hidden="true">
+        <path d="M4.2 8.5L8.2 19.8C8.6 20.8 10 20.8 10.4 19.8L13.4 12.2C13.6 11.7 14.4 11.7 14.6 12.2L17.6 19.8C18 20.8 19.4 20.8 19.8 19.8L23.8 8.5" stroke="#051B12" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>`;
+    }
+
+    /* =========================================================================
+       3. APPLICATION STATE
+       ========================================================================= */
+    const state = {
+      unlocked: false,
+      authMethod: null, // 'google' | 'pin'
+      adminUser: null,  // { email, name, photoURL, uid }
+      authLoading: false,
+      authError: "",
+      pinInput: "",
+
+      // UI Navigation
+      tab: "overview", // 'overview' | 'kyc' | 'disputes' | 'users' | 'controls'
+      sidebarCollapsed: false,
+      showConnTooltip: false,
+
+      // Firestore Connection Health
+      firestoreStatus: "connecting", // 'live' | 'connecting' | 'error'
+      firestoreErrorMsg: "",
+
+      // Raw data stores (kept separated by source so live merges never clobber sample or remote data)
+      fsUsers: {},
+      fsKycA: {}, // kyc_submissions (from wayones-user.html)
+      fsKycB: {}, // kycSubmissions (camelCase schema)
+      fsTrades: {},
+      fsOffers: {},
+      fsLogs: [],
+
+      localUsers: {},
+      localKyc: [],
+      localTrades: [],
+      localOffers: [],
+      localLogs: [],
+
+      sampleMode: false,
+      sampleUsers: {},
+      sampleKyc: [],
+      sampleTrades: [],
+      sampleOffers: [],
+
+      // Platform Settings (synced to Firestore config/platform + localStorage)
+      config: {
+        escrowFeePct: 0.5,
+        maintenanceMode: false,
+        authorizedEmails: [],
+        quickPin: "2026"
+      },
+
+      // Active Filters & Modals
+      kycFilter: "pending", // 'pending' | 'verified' | 'rejected' | 'all'
+      kycSearch: "",
+      inspectKycUid: null,
+      kycRejectReasonDraft: "",
+
+      disputeFilter: "disputed", // 'disputed' | 'active' | 'resolved' | 'all'
+      inspectTradeId: null,
+      arbChatDraft: "",
+
+      userSearch: "",
+      inspectUserUid: null,
+
+      // Lightbox state
+      lightbox: {
+        open: false,
+        title: "",
+        src: "",
+        zoomed: false,
+        rotation: 0
+      },
+
+      // In-App Confirm Dialog
+      confirmDialog: null // { title, message, confirmLabel, confirmTone, onConfirm }
+    };
+
+    let bc = null;
+    const unsubs = [];
+
+    /* =========================================================================
+       4. UTILITIES (STORAGE, ESCAPING, FORMATTING, CLIPBOARD, MOCK DOC SVGs)
+       ========================================================================= */
+    function safeLSGet(key) {
+      try { return window.localStorage.getItem(key); } catch { return null; }
+    }
+    function safeLSSet(key, val) {
+      try { window.localStorage.setItem(key, val); return true; } catch { return false; }
+    }
+
+    function esc(v) {
+      if (v === null || v === undefined) return "";
+      return String(v)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+    }
+
+    function makeId(prefix = "ADM") {
+      return `${prefix}-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).slice(2, 6).toUpperCase()}`;
+    }
+
+    function toMillis(ts) {
+      if (!ts) return 0;
+      if (typeof ts === "number") return ts;
+      if (typeof ts === "object" && typeof ts.toMillis === "function") return ts.toMillis();
+      if (typeof ts === "object" && typeof ts.seconds === "number") return ts.seconds * 1000;
+      const parsed = Date.parse(ts);
+      return isNaN(parsed) ? 0 : parsed;
+    }
+
+    function timeAgo(ts) {
+      const ms = toMillis(ts);
+      if (!ms) return "just now";
+      const s = Math.max(0, Math.floor((Date.now() - ms) / 1000));
+      if (s < 60) return `${s}s ago`;
+      if (s < 3600) return `${Math.floor(s / 60)}m ago`;
+      if (s < 86400) return `${Math.floor(s / 3600)}h ago`;
+      return `${Math.floor(s / 86400)}d ago`;
+    }
+
+    function fmtDate(ts) {
+      const ms = toMillis(ts);
+      if (!ms) return "—";
+      try {
+        return new Date(ms).toLocaleString("en-IN", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" });
+      } catch {
+        return new Date(ms).toISOString().slice(0, 16).replace("T", " ");
+      }
+    }
+
+    function normalizeKycStatus(raw) {
+      const v = String(raw || "unverified").toLowerCase();
+      if (v === "verified" || v === "approved") return "verified";
+      if (v === "pending" || v === "pending_review") return "pending";
+      if (v === "rejected" || v === "declined") return "rejected";
+      return "unverified";
+    }
+
+    function normalizeTradeStatus(raw) {
+      const v = String(raw || "escrow_locked").toLowerCase();
+      if (v === "completed" || v === "released") return "released";
+      if (v === "cancelled" || v === "refunded") return "cancelled";
+      if (v === "disputed") return "disputed";
+      if (v === "paid") return "paid";
+      return "escrow_locked";
+    }
+
+    function fmtFiat(amount, code = "INR") {
+      const f = FIAT_RATES_USD[code] || FIAT_RATES_USD.USD;
+      const n = Number(amount) || 0;
+      return f.symbol + n.toLocaleString("en-IN", { maximumFractionDigits: n >= 100 ? 0 : 2 });
+    }
+
+    function fmtCrypto(amount, symbol = "USDT") {
+      const c = COINS[symbol] || COINS.USDT;
+      return (Number(amount) || 0).toFixed(c.decimals);
+    }
+
+    function copyText(text, label = "Copied to clipboard!") {
+      try {
+        const ta = document.createElement("textarea");
+        ta.value = String(text);
+        ta.setAttribute("readonly", "");
+        ta.style.position = "fixed";
+        ta.style.top = "-9999px";
+        ta.style.left = "-9999px";
+        document.body.appendChild(ta);
+        ta.select();
+        ta.setSelectionRange(0, 999999);
+        const ok = document.execCommand("copy");
+        document.body.removeChild(ta);
+        if (ok) {
+          toast(label, "success");
+          return true;
+        }
+      } catch {}
+      toast("Unable to copy automatically.", "warning");
+      return false;
+    }
+
+    function toast(msg, type = "info") {
+      const host = document.getElementById("toast-host");
+      if (!host) return;
+      const styles = {
+        success: "border-mint/55 bg-[#0A2018]/95 text-emerald-100",
+        error:   "border-coral/55 bg-[#261116]/95 text-red-100",
+        warning: "border-amberc/55 bg-[#251B0E]/95 text-amber-100",
+        info:    "border-tealc/55 bg-[#0C1F1E]/95 text-white"
+      };
+      const dots = { success: "bg-mint", error: "bg-coral", warning: "bg-amberc", info: "bg-tealc" };
+      const el = document.createElement("div");
+      el.className = `pointer-events-auto anim-in flex items-center gap-2.5 px-4 py-3 rounded-2xl border ${styles[type] || styles.info} backdrop-blur-xl shadow-2xl text-xs sm:text-sm font-semibold`;
+      el.innerHTML = `<span class="w-2 h-2 rounded-full ${dots[type] || dots.info} shrink-0"></span><span class="flex-1 leading-snug">${esc(msg)}</span>`;
+      host.appendChild(el);
+      setTimeout(() => {
+        el.style.opacity = "0";
+        el.style.transition = "opacity 0.2s ease";
+        setTimeout(() => el.remove(), 220);
+      }, 3600);
+    }
+
+    function renderAvatar(photoURL, name, sizeClass = "w-10 h-10 text-xs") {
+      const initial = esc((name || "W").trim().charAt(0).toUpperCase() || "W");
+      if (photoURL && !photoURL.startsWith("mock:")) {
+        return `
+          <div class="relative ${sizeClass} rounded-full overflow-hidden shrink-0 border border-mint/40 bg-mint/15">
+            <img src="${esc(photoURL)}" alt="${esc(name || "User")}" referrerpolicy="no-referrer" class="w-full h-full object-cover" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';" />
+            <div style="display:none" class="w-full h-full items-center justify-center font-extrabold text-mint bg-panel">${initial}</div>
+          </div>
+        `;
+      }
+      return `<div class="${sizeClass} rounded-full shrink-0 border border-mint/40 bg-mint/15 flex items-center justify-center font-extrabold text-mint">${initial}</div>`;
+    }
+
+    /**
+     * Renders crisp inline SVG previews for [SAMPLE] documents or real <img> elements for user uploads.
+     * Ensures zero broken images and zero static base64 image strings.
+     */
+    function renderDocumentVisual(src, label, meta = {}, isLightbox = false) {
+      if (!src) {
+        return `
+          <div class="w-full h-full flex flex-col items-center justify-center text-muted text-xs p-4 text-center">
+            <span class="text-xl mb-1 opacity-50">📄</span>
+            <span>No ${esc(label)} uploaded</span>
+          </div>
+        `;
+      }
+      if (src.startsWith("mock:")) {
+        const kind = src.replace("mock:", "");
+        const wCls = isLightbox ? "w-full max-w-2xl aspect-[16/10]" : "w-full h-full";
+        if (kind === "id-front") {
+          return `
+            <svg viewBox="0 0 480 300" class="${wCls} rounded-xl shadow-lg" xmlns="http://www.w3.org/2000/svg">
+              <defs><linearGradient id="idg1" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#142922"/><stop offset="100%" stop-color="#0B1612"/></linearGradient></defs>
+              <rect width="480" height="300" rx="18" fill="url(#idg1)" stroke="#00D084" stroke-width="2"/>
+              <rect x="0" y="0" width="480" height="54" rx="18" fill="#00D084" fill-opacity="0.16"/>
+              <text x="24" y="34" fill="#00D084" font-size="16" font-weight="800" font-family="Inter,sans-serif">NATIONAL IDENTITY CARD • SAMPLE FRONT</text>
+              <rect x="28" y="78" width="110" height="136" rx="12" fill="#1E332B" stroke="#14B8A6" stroke-width="1.5"/>
+              <circle cx="83" cy="126" r="24" fill="#00D084" fill-opacity="0.35"/>
+              <path d="M48 192 C48 164 118 164 118 192" fill="#00D084" fill-opacity="0.35"/>
+              <text x="160" y="102" fill="#9AB8AC" font-size="11" font-weight="600" font-family="Inter,sans-serif">FULL LEGAL NAME</text>
+              <text x="160" y="124" fill="#FFFFFF" font-size="18" font-weight="800" font-family="Inter,sans-serif">${esc(meta.fullName || "Aarav Sharma")}</text>
+              <text x="160" y="156" fill="#9AB8AC" font-size="11" font-weight="600" font-family="Inter,sans-serif">DOCUMENT NUMBER (${esc(meta.docType || "ID")})</text>
+              <text x="160" y="178" fill="#00D084" font-size="17" font-weight="800" font-family="monospace">${esc(meta.docNumber || "4829 1940 7721")}</text>
+              <text x="160" y="210" fill="#9AB8AC" font-size="11" font-weight="600" font-family="Inter,sans-serif">COUNTRY & DOB</text>
+              <text x="160" y="230" fill="#FFFFFF" font-size="14" font-weight="700" font-family="Inter,sans-serif">${esc(meta.country || "India")} • ${esc(meta.dob || "1996-08-14")}</text>
+              <rect x="28" y="252" width="424" height="24" rx="6" fill="#090F0D"/>
+              <text x="40" y="268" fill="#9AB8AC" font-size="11" font-family="monospace">IDIND482919407721&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;SHARMA&lt;&lt;AARAV&lt;&lt;&lt;&lt;</text>
+            </svg>
+          `;
+        }
+        if (kind === "id-back") {
+          return `
+            <svg viewBox="0 0 480 300" class="${wCls} rounded-xl shadow-lg" xmlns="http://www.w3.org/2000/svg">
+              <rect width="480" height="300" rx="18" fill="#0E1B16" stroke="#1E332B" stroke-width="2"/>
+              <rect x="0" y="28" width="480" height="40" fill="#040806"/>
+              <text x="24" y="102" fill="#9AB8AC" font-size="11" font-weight="700" font-family="Inter,sans-serif">RESIDENTIAL ADDRESS (SAMPLE BACK)</text>
+              <text x="24" y="126" fill="#FFFFFF" font-size="14" font-weight="600" font-family="Inter,sans-serif">Sector 42, Residency Avenue, ${esc(meta.country || "India")}</text>
+              <text x="24" y="150" fill="#9AB8AC" font-size="12" font-family="Inter,sans-serif">Issued by National Registry Authority • Valid</text>
+              <rect x="24" y="182" width="290" height="76" rx="8" fill="#FFFFFF" fill-opacity="0.95"/>
+              <g fill="#090F0D">
+                <rect x="38" y="196" width="6" height="48"/><rect x="48" y="196" width="3" height="48"/><rect x="56" y="196" width="9" height="48"/>
+                <rect x="70" y="196" width="4" height="48"/><rect x="80" y="196" width="8" height="48"/><rect x="94" y="196" width="3" height="48"/>
+                <rect x="102" y="196" width="10" height="48"/><rect x="118" y="196" width="5" height="48"/><rect x="128" y="196" width="7" height="48"/>
+                <rect x="142" y="196" width="4" height="48"/><rect x="152" y="196" width="9" height="48"/><rect x="168" y="196" width="6" height="48"/>
+                <rect x="180" y="196" width="3" height="48"/><rect x="190" y="196" width="10" height="48"/><rect x="206" y="196" width="4" height="48"/>
+                <rect x="216" y="196" width="8" height="48"/><rect x="230" y="196" width="5" height="48"/><rect x="242" y="196" width="9" height="48"/>
+                <rect x="258" y="196" width="4" height="48"/><rect x="268" y="196" width="7" height="48"/><rect x="282" y="196" width="6" height="48"/>
+              </g>
+              <rect x="342" y="176" width="110" height="90" rx="10" fill="#142922" stroke="#00D084" stroke-width="1.5"/>
+              <text x="397" y="218" text-anchor="middle" fill="#00D084" font-size="13" font-weight="800" font-family="Inter,sans-serif">QR VERIFIED</text>
+              <text x="397" y="238" text-anchor="middle" fill="#9AB8AC" font-size="10" font-family="monospace">SAMPLE-KYC</text>
+            </svg>
+          `;
+        }
+        if (kind === "selfie") {
+          return `
+            <svg viewBox="0 0 480 300" class="${wCls} rounded-xl shadow-lg" xmlns="http://www.w3.org/2000/svg">
+              <rect width="480" height="300" rx="18" fill="#101D18" stroke="#14B8A6" stroke-width="2"/>
+              <circle cx="165" cy="116" r="46" fill="#1E332B" stroke="#00D084" stroke-width="2"/>
+              <circle cx="165" cy="108" r="18" fill="#9AB8AC" fill-opacity="0.5"/>
+              <path d="M132 154 C132 132 198 132 198 154" fill="#9AB8AC" fill-opacity="0.5"/>
+              <rect x="240" y="68" width="212" height="164" rx="14" fill="#F8FAFC" stroke="#00D084" stroke-width="2"/>
+              <text x="346" y="114" text-anchor="middle" fill="#090F0D" font-size="22" font-weight="900" font-family="Inter,sans-serif">WAYONES</text>
+              <text x="346" y="142" text-anchor="middle" fill="#065F46" font-size="13" font-weight="700" font-family="Inter,sans-serif">P2P KYC Verification</text>
+              <line x1="270" y1="160" x2="422" y2="160" stroke="#CBD5E1" stroke-width="2"/>
+              <text x="346" y="186" text-anchor="middle" fill="#334155" font-size="13" font-weight="700" font-family="monospace">${esc(meta.fullName || "Aarav Sharma")}</text>
+              <text x="346" y="210" text-anchor="middle" fill="#64748B" font-size="11" font-family="monospace">SAMPLE LIVE SELFIE</text>
+              <text x="165" y="206" text-anchor="middle" fill="#00D084" font-size="12" font-weight="800" font-family="Inter,sans-serif">Liveness Match: 98%</text>
+            </svg>
+          `;
+        }
+        if (kind === "receipt") {
+          return `
+            <svg viewBox="0 0 480 300" class="${wCls} rounded-xl shadow-lg" xmlns="http://www.w3.org/2000/svg">
+              <rect width="480" height="300" rx="18" fill="#0C1713" stroke="#00D084" stroke-width="2"/>
+              <circle cx="240" cy="54" r="24" fill="#00D084"/>
+              <path d="M229 54 L237 62 L252 46" stroke="#051B12" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+              <text x="240" y="102" text-anchor="middle" fill="#FFFFFF" font-size="18" font-weight="800" font-family="Inter,sans-serif">UPI / Bank Transfer Successful</text>
+              <text x="240" y="138" text-anchor="middle" fill="#00D084" font-size="28" font-weight="900" font-family="Inter,sans-serif">${esc(meta.amountLabel || "₹43,150")}</text>
+              <rect x="44" y="160" width="392" height="106" rx="12" fill="#15231E" stroke="#1E332B"/>
+              <text x="64" y="190" fill="#9AB8AC" font-size="12" font-family="Inter,sans-serif">UTR Reference:</text>
+              <text x="416" y="190" text-anchor="end" fill="#FFFFFF" font-size="13" font-weight="700" font-family="monospace">${esc(meta.utr || "UTR431908224511")}</text>
+              <text x="64" y="220" fill="#9AB8AC" font-size="12" font-family="Inter,sans-serif">Beneficiary:</text>
+              <text x="416" y="220" text-anchor="end" fill="#FFFFFF" font-size="13" font-weight="700" font-family="Inter,sans-serif">${esc(meta.seller || "VikramOTC")}</text>
+              <text x="64" y="250" fill="#9AB8AC" font-size="12" font-family="Inter,sans-serif">Status:</text>
+              <text x="416" y="250" text-anchor="end" fill="#00D084" font-size="12" font-weight="800" font-family="Inter,sans-serif">SETTLED • SAMPLE RECEIPT</text>
+            </svg>
+          `;
+        }
+      }
+      return `<img src="${esc(src)}" alt="${esc(label)}" class="${isLightbox ? "max-h-[78vh] max-w-full object-contain rounded-xl shadow-2xl" : "max-h-full max-w-full object-contain"}" onerror="this.onerror=null;this.src='https://placehold.co/600x360/101A17/9AB8AC?text=Image+Unavailable';" />`;
+    }
+
+    /* =========================================================================
+       5. MERGED DATA ACCESSORS (FIRESTORE + LOCAL MIRROR + OPTIONAL [SAMPLE])
+       ========================================================================= */
+    function getAllUsers() {
+      const map = new Map();
+      // 1. Local mirror users
+      Object.values(state.localUsers || {}).forEach(u => {
+        if (!u) return;
+        const uid = u.uid || u.id;
+        if (!uid) return;
+        map.set(uid, normalizeUserObj(uid, u));
+      });
+      // 2. Live Firestore users (takes precedence over local mirror)
+      Object.entries(state.fsUsers || {}).forEach(([uid, u]) => {
+        const existing = map.get(uid) || {};
+        map.set(uid, normalizeUserObj(uid, { ...existing, ...u }));
+      });
+      // 3. Optional tagged [SAMPLE] users
+      if (state.sampleMode) {
+        Object.entries(state.sampleUsers || {}).forEach(([uid, u]) => {
+          map.set(uid, normalizeUserObj(uid, { ...u, isSample: true }));
+        });
+      }
+      return Array.from(map.values()).sort((a, b) => toMillis(b.lastLoginAt) - toMillis(a.lastLoginAt));
+    }
+
+    function normalizeUserObj(uid, raw) {
+      const kycData = raw.kycData || {};
+      return {
+        uid,
+        name: raw.name || raw.username || raw.displayName || (raw.email ? raw.email.split("@")[0] : "Wayones User"),
+        email: raw.email || "",
+        photoURL: raw.photoURL || "",
+        kycStatus: normalizeKycStatus(raw.kycStatus || kycData.status),
+        kycRejectionReason: raw.kycRejectionReason || raw.kycRejectReason || raw.rejectionReason || kycData.rejectionReason || "",
+        kycData,
+        verifiedMerchant: Boolean(raw.verifiedMerchant),
+        suspended: Boolean(raw.suspended),
+        suspendReason: raw.suspendReason || "",
+        balances: { USDT: 0, USDC: 0, BTC: 0, ETH: 0, BNB: 0, SOL: 0, TRX: 0, TON: 0, ...(raw.balances || {}) },
+        lastLoginAt: raw.lastLoginAt || raw.createdAt || Date.now(),
+        isSample: Boolean(raw.isSample)
+      };
+    }
+
+    function getAllKycRecords() {
+      const map = new Map();
+      const usersByUid = new Map(getAllUsers().map(u => [u.uid, u]));
+
+      const upsertKyc = (uid, rec, isSample = false) => {
+        if (!uid) return;
+        const prev = map.get(uid) || {};
+        const u = usersByUid.get(uid) || {};
+        const status = normalizeKycStatus(rec.status || u.kycStatus || prev.status || "pending");
+        map.set(uid, {
+          id: rec.id || prev.id || `KYC-${uid.slice(0, 6).toUpperCase()}`,
+          uid,
+          name: rec.name || u.name || prev.name || rec.fullName || "Wayones Trader",
+          fullName: rec.fullName || prev.fullName || rec.name || u.name || "—",
+          email: rec.email || u.email || prev.email || "—",
+          photoURL: rec.photoURL || u.photoURL || prev.photoURL || "",
+          country: rec.country || prev.country || "India",
+          docType: rec.docType || rec.idType || prev.docType || "National ID",
+          docNumber: rec.docNumber || rec.idNumber || prev.docNumber || "—",
+          dob: rec.dob || prev.dob || "—",
+          frontImg: rec.frontImg || rec.frontImage || prev.frontImg || "",
+          backImg: rec.backImg || rec.backImage || prev.backImg || "",
+          selfieImg: rec.selfieImg || rec.selfieImage || prev.selfieImg || "",
+          status,
+          rejectionReason: rec.rejectionReason || rec.kycRejectionReason || rec.kycRejectReason || rec.reviewNotes || u.kycRejectionReason || prev.rejectionReason || "",
+          submittedAt: rec.submittedAt || prev.submittedAt || u.lastLoginAt || Date.now(),
+          verifiedAt: rec.verifiedAt || prev.verifiedAt || null,
+          isSample: Boolean(isSample || rec.isSample || u.isSample)
+        });
+      };
+
+      // 1. Nested kycData inside users/{uid}
+      usersByUid.forEach((u, uid) => {
+        const kd = u.kycData || {};
+        const hasNestedDocs = Boolean(kd.frontImage || kd.frontImg || kd.idNumber || kd.docNumber || kd.idType || kd.docType);
+        if (hasNestedDocs || u.kycStatus !== "unverified") {
+          upsertKyc(uid, { ...kd, status: u.kycStatus, rejectionReason: u.kycRejectionReason }, u.isSample);
+        }
+      });
+
+      // 2. Local mirror kycRequests
+      (state.localKyc || []).forEach(k => {
+        if (k && (k.uid || k.userId)) upsertKyc(k.uid || k.userId, k, false);
+      });
+
+      // 3. Firestore kyc_submissions & kycSubmissions
+      Object.entries(state.fsKycA || {}).forEach(([docId, k]) => upsertKyc(k.uid || k.userId || docId, k, false));
+      Object.entries(state.fsKycB || {}).forEach(([docId, k]) => upsertKyc(k.uid || k.userId || docId, k, false));
+
+      // 4. Optional [SAMPLE] KYCs
+      if (state.sampleMode) {
+        (state.sampleKyc || []).forEach(k => upsertKyc(k.uid, k, true));
+      }
+
+      return Array.from(map.values()).sort((a, b) => toMillis(b.submittedAt) - toMillis(a.submittedAt));
+    }
+
+    function getAllTrades() {
+      const map = new Map();
+      (state.localTrades || []).forEach(t => { if (t && t.id) map.set(t.id, normalizeTradeObj(t.id, t)); });
+      Object.entries(state.fsTrades || {}).forEach(([id, t]) => {
+        const prev = map.get(id) || {};
+        map.set(id, normalizeTradeObj(id, { ...prev, ...t }));
+      });
+      if (state.sampleMode) {
+        (state.sampleTrades || []).forEach(t => map.set(t.id, normalizeTradeObj(t.id, { ...t, isSample: true })));
+      }
+      return Array.from(map.values()).sort((a, b) => toMillis(b.createdAt) - toMillis(a.createdAt));
+    }
+
+    function normalizeTradeObj(id, raw) {
+      return {
+        ...raw,
+        id,
+        status: normalizeTradeStatus(raw.status),
+        crypto: raw.crypto || "USDT",
+        fiat: raw.fiat || "INR",
+        cryptoAmount: Number(raw.cryptoAmount) || 0,
+        fiatAmount: Number(raw.fiatAmount) || 0,
+        unitPrice: Number(raw.unitPrice) || 0,
+        buyerName: raw.buyerName || "Buyer",
+        buyerUid: raw.buyerUid || "",
+        sellerName: raw.sellerName || "Seller",
+        sellerUid: raw.sellerUid || "",
+        paymentMethod: raw.paymentMethod || "UPI",
+        utrReference: raw.utrReference || "",
+        frozenTerms: raw.frozenTerms || "Standard Wayones P2P Escrow terms.",
+        termsHash: raw.termsHash || "0x0000000000000000",
+        dispute: raw.dispute || null,
+        disputeStatus: raw.disputeStatus || "",
+        messages: Array.isArray(raw.messages) ? raw.messages : [],
+        createdAt: raw.createdAt || Date.now(),
+        expiresAt: raw.expiresAt || (Date.now() + 900000),
+        isSample: Boolean(raw.isSample)
+      };
+    }
+
+    function getAllOffers() {
+      const map = new Map();
+      (state.localOffers || []).forEach(o => { if (o && o.id) map.set(o.id, o); });
+      Object.entries(state.fsOffers || {}).forEach(([id, o]) => map.set(id, { id, ...o }));
+      if (state.sampleMode) {
+        (state.sampleOffers || []).forEach(o => map.set(o.id, { ...o, isSample: true }));
+      }
+      return Array.from(map.values()).sort((a, b) => toMillis(b.createdAt) - toMillis(a.createdAt));
+    }
+
+    function getAllLogs() {
+      const map = new Map();
+      (state.localLogs || []).forEach(l => { if (l && l.id) map.set(l.id, l); });
+      (state.fsLogs || []).forEach(l => { if (l && l.id) map.set(l.id, l); });
+      return Array.from(map.values()).sort((a, b) => toMillis(b.createdAt) - toMillis(a.createdAt));
+    }
+
+    /* =========================================================================
+       6. LOCAL MIRROR, BROADCAST CHANNEL & FIRESTORE SYNC ENGINE
+       ========================================================================= */
+    function loadAdminSettingsAndLogs() {
+      try {
+        const cfg = JSON.parse(safeLSGet(ADMIN_CFG_KEY) || "{}");
+        state.config = { ...state.config, ...cfg };
+      } catch {}
+      try {
+        const logs = JSON.parse(safeLSGet(ADMIN_LOGS_KEY) || "[]");
+        if (Array.isArray(logs)) state.localLogs = logs;
+      } catch {}
+    }
+
+    function saveAdminConfigLocal() {
+      safeLSSet(ADMIN_CFG_KEY, JSON.stringify(state.config));
+    }
+
+    function loadSharedMirror() {
+      try {
+        const raw = safeLSGet(SHARED_LS_KEY);
+        if (!raw) return;
+        const d = JSON.parse(raw);
+        if (d.users && typeof d.users === "object") state.localUsers = d.users;
+        if (Array.isArray(d.kycRequests)) state.localKyc = d.kycRequests;
+        if (Array.isArray(d.trades)) state.localTrades = d.trades;
+        if (Array.isArray(d.offers)) state.localOffers = d.offers;
+      } catch {}
+    }
+
+    function writeSharedMirror(mutatorFn) {
+      let existing = {};
+      try { existing = JSON.parse(safeLSGet(SHARED_LS_KEY) || "{}"); } catch { existing = {}; }
+      existing.users = existing.users && typeof existing.users === "object" ? existing.users : {};
+      existing.kycRequests = Array.isArray(existing.kycRequests) ? existing.kycRequests : [];
+      existing.trades = Array.isArray(existing.trades) ? existing.trades : [];
+      existing.offers = Array.isArray(existing.offers) ? existing.offers : [];
+
+      mutatorFn(existing);
+      existing.updatedAt = Date.now();
+      safeLSSet(SHARED_LS_KEY, JSON.stringify(existing));
+
+      state.localUsers = existing.users;
+      state.localKyc = existing.kycRequests;
+      state.localTrades = existing.trades;
+      state.localOffers = existing.offers;
+
+      if (bc) {
+        try { bc.postMessage({ type: "DB_UPDATED", source: "wayones_admin", ts: Date.now() }); } catch {}
+      }
+    }
+
+    async function appendAuditLog(action, target, details, severity = "info") {
+      const entry = {
+        id: makeId("LOG"),
+        action,
+        target,
+        details,
+        severity,
+        adminEmail: state.adminUser?.email || (state.authMethod === "pin" ? "QuickPIN Admin" : "System Admin"),
+        createdAt: Date.now()
+      };
+      state.localLogs.unshift(entry);
+      if (state.localLogs.length > 150) state.localLogs = state.localLogs.slice(0, 150);
+      safeLSSet(ADMIN_LOGS_KEY, JSON.stringify(state.localLogs));
+
+      if (db && !String(target).includes("SAMPLE")) {
+        try {
+          await setDoc(doc(db, "adminLogs", entry.id), {
+            ...entry,
+            serverAt: serverTimestamp()
+          });
+        } catch (err) {
+          console.warn("Audit log Firestore write notice:", err?.code || err?.message);
+        }
+      }
+    }
+
+    function markFirestoreLive() {
+      if (state.firestoreStatus !== "live") {
+        state.firestoreStatus = "live";
+        state.firestoreErrorMsg = "";
+        renderApp();
+      }
+    }
+
+    function markFirestoreError(err) {
+      state.firestoreStatus = "error";
+      state.firestoreErrorMsg = err?.code === "permission-denied"
+        ? "Firestore Security Rules are blocking reads. Set your Firestore Rules to test mode or allow admin access."
+        : (err?.message || "Unable to reach Firestore. Operating with local BroadcastChannel mirror.");
+      renderApp();
+    }
+
+    function attachFirestoreListeners() {
+      if (!db) {
+        markFirestoreError({ message: "Firebase SDK unavailable." });
+        return;
+      }
+
+      const safeListen = (colName, onData) => {
+        try {
+          const unsub = onSnapshot(
+            collection(db, colName),
+            (snap) => {
+              markFirestoreLive();
+              const obj = {};
+              snap.forEach(d => { obj[d.id] = { id: d.id, ...d.data() }; });
+              onData(obj);
+              renderApp();
+            },
+            (err) => {
+              console.warn(`Firestore listener [${colName}]:`, err?.code || err?.message);
+              if (err?.code === "permission-denied" || err?.code === "unavailable") {
+                markFirestoreError(err);
+              }
+            }
+          );
+          unsubs.push(unsub);
+        } catch (err) {
+          console.warn(`Could not subscribe to ${colName}:`, err);
+        }
+      };
+
+      safeListen("users", (obj) => { state.fsUsers = obj; });
+      safeListen("kyc_submissions", (obj) => { state.fsKycA = obj; });
+      safeListen("kycSubmissions", (obj) => { state.fsKycB = obj; });
+      safeListen("trades", (obj) => { state.fsTrades = obj; });
+      safeListen("offers", (obj) => { state.fsOffers = obj; });
+      safeListen("adminLogs", (obj) => {
+        state.fsLogs = Object.values(obj).sort((a, b) => toMillis(b.createdAt || b.serverAt) - toMillis(a.createdAt || a.serverAt));
+      });
+
+      // Platform config doc
+      try {
+        const unsubCfg = onSnapshot(
+          doc(db, "config", "platform"),
+          (snap) => {
+            markFirestoreLive();
+            if (snap.exists()) {
+              const d = snap.data();
+              state.config = {
+                ...state.config,
+                escrowFeePct: typeof d.escrowFeePct === "number" ? d.escrowFeePct : state.config.escrowFeePct,
+                maintenanceMode: typeof d.maintenanceMode === "boolean" ? d.maintenanceMode : state.config.maintenanceMode,
+                authorizedEmails: Array.isArray(d.authorizedEmails) ? d.authorizedEmails : state.config.authorizedEmails,
+                quickPin: d.quickPin || state.config.quickPin
+              };
+              saveAdminConfigLocal();
+              renderApp();
+            }
+          },
+          () => {}
+        );
+        unsubs.push(unsubCfg);
+      } catch {}
+    }
+
+    /* =========================================================================
+       7. SAMPLE PREVIEW DATA GENERATOR (STRICTLY TAGGED [SAMPLE])
+       ========================================================================= */
+    function loadSampleCases() {
+      const now = Date.now();
+      state.sampleUsers = {
+        "SAMPLE-USR-01": {
+          uid: "SAMPLE-USR-01",
+          name: "[SAMPLE] Aarav Sharma",
+          email: "aarav.sample@wayones.demo",
+          photoURL: "",
+          kycStatus: "pending",
+          verifiedMerchant: false,
+          suspended: false,
+          balances: { USDT: 1240.5, BTC: 0.015, ETH: 0.42 },
+          lastLoginAt: now - 420000,
+          isSample: true
+        },
+        "SAMPLE-USR-02": {
+          uid: "SAMPLE-USR-02",
+          name: "[SAMPLE] Fatima Al-Mansoor",
+          email: "fatima.sample@wayones.demo",
+          photoURL: "",
+          kycStatus: "verified",
+          verifiedMerchant: true,
+          suspended: false,
+          balances: { USDT: 8420.0, USDC: 2500.0, SOL: 14.5 },
+          lastLoginAt: now - 1800000,
+          isSample: true
+        },
+        "SAMPLE-USR-03": {
+          uid: "SAMPLE-USR-03",
+          name: "[SAMPLE] Daniel Okafor",
+          email: "daniel.sample@wayones.demo",
+          photoURL: "",
+          kycStatus: "rejected",
+          kycRejectionReason: "Blurry / Unreadable ID — please re-upload clear corners.",
+          verifiedMerchant: false,
+          suspended: false,
+          balances: { USDT: 310.0, TRX: 1800 },
+          lastLoginAt: now - 3600000,
+          isSample: true
+        }
+      };
+
+      state.sampleKyc = [
+        {
+          id: "SAMPLE-KYC-101",
+          uid: "SAMPLE-USR-01",
+          name: "[SAMPLE] Aarav Sharma",
+          fullName: "Aarav Vikram Sharma",
+          email: "aarav.sample@wayones.demo",
+          country: "India",
+          docType: "Aadhaar Card",
+          docNumber: "4829 1940 7721",
+          dob: "1996-08-14",
+          frontImg: "mock:id-front",
+          backImg: "mock:id-back",
+          selfieImg: "mock:selfie",
+          status: "pending",
+          rejectionReason: "",
+          submittedAt: now - 320000,
+          isSample: true
+        },
+        {
+          id: "SAMPLE-KYC-102",
+          uid: "SAMPLE-USR-02",
+          name: "[SAMPLE] Fatima Al-Mansoor",
+          fullName: "Fatima Al-Mansoor",
+          email: "fatima.sample@wayones.demo",
+          country: "United Arab Emirates",
+          docType: "Emirates ID",
+          docNumber: "784-1993-4829104-1",
+          dob: "1993-03-22",
+          frontImg: "mock:id-front",
+          backImg: "mock:id-back",
+          selfieImg: "mock:selfie",
+          status: "verified",
+          rejectionReason: "",
+          submittedAt: now - 86400000,
+          isSample: true
+        },
+        {
+          id: "SAMPLE-KYC-103",
+          uid: "SAMPLE-USR-03",
+          name: "[SAMPLE] Daniel Okafor",
+          fullName: "Daniel Chinedu Okafor",
+          email: "daniel.sample@wayones.demo",
+          country: "Nigeria",
+          docType: "NIN Slip",
+          docNumber: "61948201944",
+          dob: "1994-11-05",
+          frontImg: "mock:id-front",
+          backImg: "mock:id-back",
+          selfieImg: "mock:selfie",
+          status: "rejected",
+          rejectionReason: "Blurry / Unreadable ID — please re-upload clear corners.",
+          submittedAt: now - 17200000,
+          isSample: true
+        }
+      ];
+
+      state.sampleTrades = [
+        {
+          id: "SAMPLE-TRD-901",
+          buyerUid: "SAMPLE-USR-01",
+          buyerName: "[SAMPLE] Aarav Sharma",
+          sellerUid: "SAMPLE-USR-02",
+          sellerName: "[SAMPLE] Fatima Al-Mansoor",
+          crypto: "USDT",
+          network: "BEP-20",
+          fiat: "INR",
+          fiatAmount: 43150,
+          cryptoAmount: 500,
+          unitPrice: 86.30,
+          paymentMethod: "UPI",
+          utrReference: "UTR431908224511",
+          frozenTerms: "Own verified Indian bank account only. No crypto words in UPI remarks. Instant release after credit confirmation.",
+          termsHash: "0x8f24d19c7e4a0b52c91e6b3f0a4d82e1c7b90f32a14c5e89d1b2a0f4419c8e12",
+          status: "disputed",
+          dispute: {
+            reason: "Payment sent but seller not releasing crypto",
+            description: "Sent ₹43,150 via PhonePe UPI 12 minutes ago. Bank confirmed debit with UTR431908224511. Attached screenshot.",
+            proofImg: "mock:receipt",
+            openedByName: "[SAMPLE] Aarav Sharma",
+            openedAt: now - 240000
+          },
+          messages: [
+            { id: "sm1", senderRole: "system", senderName: "Wayones Escrow", text: "500.00 USDT locked in Wayones Non-Custodial Escrow.", createdAt: now - 900000 },
+            { id: "sm2", senderRole: "user", senderUid: "SAMPLE-USR-01", senderName: "[SAMPLE] Aarav Sharma", text: "Transferred ₹43,150 via UPI. UTR is UTR431908224511. Please release.", createdAt: now - 600000 },
+            { id: "sm3", senderRole: "user", senderUid: "SAMPLE-USR-02", senderName: "[SAMPLE] Fatima Al-Mansoor", text: "Checking my HDFC statement, SMS alert delayed.", createdAt: now - 420000 },
+            { id: "sm4", senderRole: "system", senderName: "Wayones Escrow", text: "DISPUTE OPENED by Buyer. Escrow frozen pending Wayones Arbitrator review.", createdAt: now - 240000 }
+          ],
+          createdAt: now - 900000,
+          expiresAt: now + 360000,
+          isSample: true
+        },
+        {
+          id: "SAMPLE-TRD-902",
+          buyerUid: "SAMPLE-USR-02",
+          buyerName: "[SAMPLE] Fatima Al-Mansoor",
+          sellerUid: "SAMPLE-USR-03",
+          sellerName: "[SAMPLE] Daniel Okafor",
+          crypto: "BTC",
+          network: "BEP-20",
+          fiat: "USD",
+          fiatAmount: 1897,
+          cryptoAmount: 0.02,
+          unitPrice: 94850,
+          paymentMethod: "Zelle",
+          utrReference: "ZLL-9941820",
+          frozenTerms: "Zelle from matching KYC account only.",
+          termsHash: "0x41a7e92c3b018f55a2c7d9901e4b3a88c55f12d4a90b77c3e2a1f44b8910cd22",
+          status: "paid",
+          dispute: null,
+          messages: [
+            { id: "sm5", senderRole: "system", senderName: "Wayones Escrow", text: "0.020000 BTC locked in Escrow. Buyer marked payment sent.", createdAt: now - 540000 }
+          ],
+          createdAt: now - 540000,
+          expiresAt: now + 520000,
+          isSample: true
+        }
+      ];
+
+      state.sampleOffers = [
+        {
+          id: "SAMPLE-OFF-401",
+          traderName: "[SAMPLE] Fatima Al-Mansoor",
+          side: "SELL",
+          crypto: "USDT",
+          fiat: "INR",
+          price: 86.85,
+          minLimit: 2000,
+          maxLimit: 150000,
+          availableCrypto: 4200,
+          paymentMethods: ["UPI", "IMPS"],
+          isActive: true,
+          createdAt: now - 7200000,
+          isSample: true
+        }
+      ];
+
+      state.sampleMode = true;
+      toast("Sample [SAMPLE] KYC & Dispute cases loaded for preview!", "success");
+      renderApp();
+    }
+
+    function clearSampleCases() {
+      state.sampleMode = false;
+      state.sampleUsers = {};
+      state.sampleKyc = [];
+      state.sampleTrades = [];
+      state.sampleOffers = [];
+      if (state.inspectKycUid?.startsWith("SAMPLE-")) state.inspectKycUid = null;
+      if (state.inspectTradeId?.startsWith("SAMPLE-")) state.inspectTradeId = null;
+      if (state.inspectUserUid?.startsWith("SAMPLE-")) state.inspectUserUid = null;
+      closeModal();
+      toast("All [SAMPLE] preview records cleared.", "info");
+      renderApp();
+    }
+
+    /* =========================================================================
+       8. ADMIN AUTHENTICATION GATE (GOOGLE AUTH + QUICK PIN)
+       ========================================================================= */
+    function isEmailAuthorized(email) {
+      const list = (state.config.authorizedEmails || []).map(e => String(e).trim().toLowerCase()).filter(Boolean);
+      if (!list.length) return true; // If no whitelist configured yet, any Google admin login is allowed
+      return list.includes(String(email || "").trim().toLowerCase());
+    }
+
+    async function handleGoogleAdminSignIn() {
+      if (!auth || !googleProvider) {
+        state.authError = "Firebase Auth SDK is initializing. Try Quick Admin PIN or refresh.";
+        renderApp();
+        return;
+      }
+      state.authLoading = true;
+      state.authError = "";
+      renderApp();
+
+      try {
+        const res = await signInWithPopup(auth, googleProvider);
+        state.authLoading = false;
+        if (res?.user) {
+          completeGoogleUnlock(res.user);
+        }
+      } catch (err) {
+        const code = err?.code || "";
+        if (code === "auth/popup-blocked" || code === "auth/operation-not-supported-in-this-environment") {
+          try {
+            await signInWithRedirect(auth, googleProvider);
+            return;
+          } catch (rErr) {
+            handleAuthFailure(rErr);
+          }
+        } else {
+          handleAuthFailure(err);
+        }
+      }
+    }
+
+    function handleAuthFailure(err) {
+      state.authLoading = false;
+      const code = err?.code || "";
+      if (code === "auth/unauthorized-domain") {
+        state.authError = "Google Sign-In activates once hosted on your Firebase domain (wayones-595fb.web.app). Use Quick Passkey PIN (2026) below to unlock immediately here.";
+      } else if (code === "auth/popup-closed-by-user" || code === "auth/cancelled-popup-request") {
+        state.authError = "Google sign-in popup was closed. Tap again or use Quick Passkey PIN.";
+      } else {
+        state.authError = err?.message || "Unable to complete Google Sign-In.";
+      }
+      renderApp();
+    }
+
+    function completeGoogleUnlock(fbUser) {
+      if (!isEmailAuthorized(fbUser.email)) {
+        state.authError = `Access denied for ${fbUser.email}. This email is not in your Authorized Admin Whitelist.`;
+        toast("Unauthorized Google account blocked.", "error");
+        try { signOut(auth); } catch {}
+        renderApp();
+        return;
+      }
+      state.unlocked = true;
+      state.authMethod = "google";
+      state.adminUser = {
+        uid: fbUser.uid,
+        email: fbUser.email || "admin@wayones.com",
+        name: fbUser.displayName || "Wayones Admin",
+        photoURL: fbUser.photoURL || ""
+      };
+      state.authError = "";
+      appendAuditLog("ADMIN_LOGIN", "Console", `Signed in via Google (${state.adminUser.email})`, "info");
+      toast(`Admin Console unlocked (${state.adminUser.email})`, "success");
+      renderApp();
+    }
+
+    function unlockWithPin(e) {
+      if (e) e.preventDefault();
+      const inp = document.getElementById("admin-pin-inp");
+      const val = (inp ? inp.value : state.pinInput).trim();
+      const expected = String(state.config.quickPin || "2026");
+
+      if (val === expected) {
+        state.unlocked = true;
+        state.authMethod = "pin";
+        state.adminUser = state.adminUser || {
+          uid: "local-admin-pin",
+          email: "owner@wayones.local",
+          name: "Wayones Owner (PIN)",
+          photoURL: ""
+        };
+        state.pinInput = "";
+        state.authError = "";
+        appendAuditLog("ADMIN_LOGIN", "Console", "Unlocked using Quick Admin Passkey PIN", "info");
+        toast("Admin Console unlocked via Quick Passkey!", "success");
+        renderApp();
+      } else {
+        state.authError = "Incorrect Admin Passkey PIN. Default PIN is 2026 (editable in Controls).";
+        toast("Invalid Admin PIN.", "error");
+        renderApp();
+      }
+    }
+
+    async function lockConsole() {
+      if (state.authMethod === "google" && auth) {
+        try { await signOut(auth); } catch {}
+      }
+      state.unlocked = false;
+      state.authMethod = null;
+      state.adminUser = null;
+      state.pinInput = "";
+      state.authError = "";
+      closeModal();
+      closeLightbox();
+      closeConfirm();
+      toast("Admin Console locked securely.", "info");
+      renderApp();
+    }
+
+    /* =========================================================================
+       9. ADMIN ACTIONS: KYC APPROVE/REJECT, DISPUTE VERDICTS, USERS, OFFERS
+       ========================================================================= */
+    async function approveKyc(uid) {
+      const kyc = getAllKycRecords().find(k => k.uid === uid);
+      if (!kyc) return;
+
+      if (kyc.isSample) {
+        if (state.sampleUsers[uid]) {
+          state.sampleUsers[uid].kycStatus = "verified";
+          state.sampleUsers[uid].kycRejectionReason = "";
+        }
+        state.sampleKyc = state.sampleKyc.map(k => k.uid === uid ? { ...k, status: "verified", rejectionReason: "", verifiedAt: Date.now() } : k);
+        await appendAuditLog("KYC_APPROVED", `[SAMPLE] ${kyc.fullName}`, `Approved ${kyc.docType} (${kyc.country})`, "success");
+        closeModal();
+        toast(`[SAMPLE] KYC Approved for ${kyc.fullName}!`, "success");
+        renderApp();
+        return;
+      }
+
+      // 1. Update local mirror + BroadcastChannel immediately for instant cross-tab sync
+      writeSharedMirror((mirror) => {
+        mirror.users[uid] = {
+          ...(mirror.users[uid] || { uid, name: kyc.name, email: kyc.email }),
+          kycStatus: "verified",
+          kycRejectReason: "",
+          kycRejectionReason: "",
+          verifiedAt: Date.now()
+        };
+        const idx = mirror.kycRequests.findIndex(k => k.uid === uid || k.userId === uid);
+        if (idx >= 0) {
+          mirror.kycRequests[idx] = { ...mirror.kycRequests[idx], status: "verified", rejectionReason: "", verifiedAt: Date.now() };
+        }
+      });
+
+      // 2. Update Firestore across users/{uid}, kyc_submissions/{uid}, and kycSubmissions/{uid}
+      if (db) {
+        try {
+          await setDoc(doc(db, "users", uid), {
+            kycStatus: "verified",
+            verifiedAt: serverTimestamp(),
+            kycRejectReason: "",
+            kycRejectionReason: "",
+            rejectionReason: ""
+          }, { merge: true });
+        } catch (err) { console.warn("users KYC approve err:", err); }
+
+        try {
+          await setDoc(doc(db, "kyc_submissions", uid), {
+            status: "verified",
+            rejectionReason: "",
+            verifiedAt: serverTimestamp()
+          }, { merge: true });
+        } catch (err) { console.warn("kyc_submissions approve err:", err); }
+
+        if (state.fsKycB[uid]) {
+          try {
+            await setDoc(doc(db, "kycSubmissions", uid), {
+              status: "verified",
+              rejectionReason: "",
+              verifiedAt: serverTimestamp()
+            }, { merge: true });
+          } catch {}
+        }
+      }
+
+      await appendAuditLog("KYC_APPROVED", kyc.email || uid, `Approved ${kyc.docType} (${kyc.country}) for ${kyc.fullName}`, "success");
+      closeModal();
+      toast(`KYC Verified for ${kyc.fullName}! Synced live to user app.`, "success");
+      renderApp();
+    }
+
+    async function rejectKyc(uid) {
+      const reasonEl = document.getElementById("kyc-reject-reason");
+      const reason = (reasonEl ? reasonEl.value : state.kycRejectReasonDraft).trim();
+      if (!reason || reason.length < 5) {
+        toast("Please select or enter a clear rejection reason.", "warning");
+        return;
+      }
+
+      const kyc = getAllKycRecords().find(k => k.uid === uid);
+      if (!kyc) return;
+
+      if (kyc.isSample) {
+        if (state.sampleUsers[uid]) {
+          state.sampleUsers[uid].kycStatus = "rejected";
+          state.sampleUsers[uid].kycRejectionReason = reason;
+        }
+        state.sampleKyc = state.sampleKyc.map(k => k.uid === uid ? { ...k, status: "rejected", rejectionReason: reason } : k);
+        await appendAuditLog("KYC_REJECTED", `[SAMPLE] ${kyc.fullName}`, `Rejected: ${reason}`, "warning");
+        closeModal();
+        toast(`[SAMPLE] KYC Rejected for ${kyc.fullName}.`, "warning");
+        renderApp();
+        return;
+      }
+
+      writeSharedMirror((mirror) => {
+        mirror.users[uid] = {
+          ...(mirror.users[uid] || { uid, name: kyc.name, email: kyc.email }),
+          kycStatus: "rejected",
+          kycRejectReason: reason,
+          kycRejectionReason: reason,
+          rejectionReason: reason
+        };
+        const idx = mirror.kycRequests.findIndex(k => k.uid === uid || k.userId === uid);
+        if (idx >= 0) {
+          mirror.kycRequests[idx] = { ...mirror.kycRequests[idx], status: "rejected", rejectionReason: reason };
+        }
+      });
+
+      if (db) {
+        try {
+          await setDoc(doc(db, "users", uid), {
+            kycStatus: "rejected",
+            kycRejectReason: reason,
+            kycRejectionReason: reason,
+            rejectionReason: reason,
+            rejectedAt: serverTimestamp()
+          }, { merge: true });
+        } catch (err) { console.warn("users KYC reject err:", err); }
+
+        try {
+          await setDoc(doc(db, "kyc_submissions", uid), {
+            status: "rejected",
+            rejectionReason: reason,
+            reviewedAt: serverTimestamp()
+          }, { merge: true });
+        } catch (err) { console.warn("kyc_submissions reject err:", err); }
+
+        if (state.fsKycB[uid]) {
+          try {
+            await setDoc(doc(db, "kycSubmissions", uid), {
+              status: "rejected",
+              rejectionReason: reason,
+              reviewedAt: serverTimestamp()
+            }, { merge: true });
+          } catch {}
+        }
+      }
+
+      await appendAuditLog("KYC_REJECTED", kyc.email || uid, `Rejected (${kyc.docType}): ${reason}`, "warning");
+      closeModal();
+      toast(`KYC Rejected for ${kyc.fullName}. Reason sent to user.`, "warning");
+      renderApp();
+    }
+
+    async function sendArbitratorMessage(e, tradeId) {
+      if (e) e.preventDefault();
+      const inp = document.getElementById("arb-chat-inp");
+      const text = (inp ? inp.value : "").trim();
+      if (!text) return;
+
+      const t = getAllTrades().find(x => x.id === tradeId);
+      if (!t) return;
+      if (inp) inp.value = "";
+
+      const msgObj = {
+        id: makeId("ARB"),
+        senderRole: "admin",
+        senderName: "[Wayones Arbitrator]",
+        text,
+        createdAt: Date.now()
+      };
+      const updatedMsgs = [...(t.messages || []), msgObj];
+
+      if (t.isSample) {
+        state.sampleTrades = state.sampleTrades.map(x => x.id === tradeId ? { ...x, messages: updatedMsgs } : x);
+        renderTradeInspectModal(tradeId);
+        toast("Arbitrator message posted to [SAMPLE] trade chat.", "info");
+        return;
+      }
+
+      writeSharedMirror((mirror) => {
+        const idx = mirror.trades.findIndex(x => x.id === tradeId);
+        if (idx >= 0) mirror.trades[idx] = { ...mirror.trades[idx], messages: updatedMsgs };
+      });
+
+      if (db) {
+        try {
+          await setDoc(doc(db, "trades", tradeId), { messages: updatedMsgs }, { merge: true });
+        } catch (err) { console.warn("Arbitrator chat Firestore err:", err); }
+      }
+
+      await appendAuditLog("ARBITRATOR_CHAT", tradeId, `Posted message: "${text.slice(0, 70)}"`, "info");
+      renderTradeInspectModal(tradeId);
+      toast("Official [Wayones Arbitrator] message sent!", "success");
+    }
+
+    async function executeDisputeVerdict(tradeId, verdict) {
+      const t = getAllTrades().find(x => x.id === tradeId);
+      if (!t) return;
+
+      let nextStatus = t.status;
+      let disputeStatus = t.disputeStatus || "";
+      let systemNote = "";
+      let logAction = "";
+      let logSev = "success";
+
+      if (verdict === "release_buyer") {
+        nextStatus = "released";
+        disputeStatus = "resolved_buyer";
+        systemNote = `BINDING VERDICT: Escrow released to Buyer (${t.buyerName}). ${fmtCrypto(t.cryptoAmount, t.crypto)} ${t.crypto} credited after payment verification.`;
+        logAction = "DISPUTE_RELEASE_BUYER";
+      } else if (verdict === "refund_seller") {
+        nextStatus = "cancelled";
+        disputeStatus = "resolved_seller";
+        systemNote = `BINDING VERDICT: Escrow refunded to Seller (${t.sellerName}). ${fmtCrypto(t.cryptoAmount, t.crypto)} ${t.crypto} returned to Seller wallet.`;
+        logAction = "DISPUTE_REFUND_SELLER";
+        logSev = "warning";
+      } else {
+        systemNote = `EVIDENCE REQUEST: Wayones Arbitrator has placed this trade on hold and requested updated bank statement / video proof from both parties within 30 minutes.`;
+        logAction = "DISPUTE_HOLD_EVIDENCE";
+        logSev = "info";
+      }
+
+      const updatedMsgs = [
+        ...(t.messages || []),
+        {
+          id: makeId("VRD"),
+          senderRole: "admin",
+          senderName: "[Wayones Arbitrator]",
+          text: systemNote,
+          createdAt: Date.now()
+        }
+      ];
+
+      if (t.isSample) {
+        state.sampleTrades = state.sampleTrades.map(x => x.id === tradeId ? {
+          ...x,
+          status: nextStatus,
+          disputeStatus,
+          messages: updatedMsgs,
+          resolvedAt: verdict !== "hold" ? Date.now() : x.resolvedAt
+        } : x);
+
+        if (verdict === "release_buyer" && state.sampleUsers[t.buyerUid]) {
+          const b = state.sampleUsers[t.buyerUid];
+          b.balances = b.balances || {};
+          b.balances[t.crypto] = Number(((b.balances[t.crypto] || 0) + t.cryptoAmount).toFixed(6));
+        } else if (verdict === "refund_seller" && state.sampleUsers[t.sellerUid]) {
+          const s = state.sampleUsers[t.sellerUid];
+          s.balances = s.balances || {};
+          s.balances[t.crypto] = Number(((s.balances[t.crypto] || 0) + t.cryptoAmount).toFixed(6));
+        }
+
+        await appendAuditLog(logAction, `[SAMPLE] ${tradeId}`, systemNote, logSev);
+        renderTradeInspectModal(tradeId);
+        toast("Verdict applied to [SAMPLE] dispute case!", logSev);
+        renderApp();
+        return;
+      }
+
+      // Live update in local mirror + BroadcastChannel
+      writeSharedMirror((mirror) => {
+        const idx = mirror.trades.findIndex(x => x.id === tradeId);
+        if (idx >= 0) {
+          mirror.trades[idx] = {
+            ...mirror.trades[idx],
+            status: nextStatus,
+            disputeStatus,
+            messages: updatedMsgs,
+            resolvedAt: verdict !== "hold" ? Date.now() : mirror.trades[idx].resolvedAt
+          };
+        }
+        const creditUid = verdict === "release_buyer" ? t.buyerUid : verdict === "refund_seller" ? t.sellerUid : null;
+        if (creditUid && mirror.users[creditUid]) {
+          const bals = mirror.users[creditUid].balances || {};
+          bals[t.crypto] = Number(((bals[t.crypto] || 0) + t.cryptoAmount).toFixed(6));
+          mirror.users[creditUid].balances = bals;
+        }
+      });
+
+      // Live update in Firestore
+      if (db) {
+        try {
+          await setDoc(doc(db, "trades", tradeId), {
+            status: nextStatus,
+            disputeStatus,
+            messages: updatedMsgs,
+            resolvedAt: verdict !== "hold" ? serverTimestamp() : null
+          }, { merge: true });
+        } catch (err) { console.warn("Trade verdict Firestore err:", err); }
+
+        const creditUid = verdict === "release_buyer" ? t.buyerUid : verdict === "refund_seller" ? t.sellerUid : null;
+        if (creditUid && !creditUid.startsWith("tr_")) {
+          try {
+            const uSnap = await getDoc(doc(db, "users", creditUid));
+            const curBals = uSnap.exists() && uSnap.data().balances ? { ...uSnap.data().balances } : {};
+            curBals[t.crypto] = Number(((Number(curBals[t.crypto]) || 0) + t.cryptoAmount).toFixed(6));
+            await setDoc(doc(db, "users", creditUid), { balances: curBals }, { merge: true });
+          } catch (err) { console.warn("User balance credit err:", err); }
+        }
+      }
+
+      await appendAuditLog(logAction, tradeId, systemNote, logSev);
+      renderTradeInspectModal(tradeId);
+      toast(`Arbitration ruling applied to ${tradeId}!`, logSev);
+      renderApp();
+    }
+
+    async function adjustUserBalance(uid, coin, delta) {
+      const u = getAllUsers().find(x => x.uid === uid);
+      if (!u || isNaN(delta) || delta === 0) return;
+
+      const cur = Number(u.balances?.[coin] || 0);
+      const next = Math.max(0, Number((cur + delta).toFixed(6)));
+
+      if (u.isSample) {
+        state.sampleUsers[uid].balances[coin] = next;
+        await appendAuditLog("BALANCE_ADJUST", `[SAMPLE] ${u.email}`, `${delta > 0 ? "+" : ""}${delta} ${coin} (New: ${next})`, "info");
+        renderUserDrawer(uid);
+        toast(`Updated [SAMPLE] balance: ${next} ${coin}`, "success");
+        renderApp();
+        return;
+      }
+
+      writeSharedMirror((mirror) => {
+        const existing = mirror.users[uid] || { uid, name: u.name, email: u.email, balances: {} };
+        existing.balances = { ...(existing.balances || {}), [coin]: next };
+        mirror.users[uid] = existing;
+      });
+
+      if (db) {
+        try {
+          const nextBals = { ...(u.balances || {}), [coin]: next };
+          await setDoc(doc(db, "users", uid), { balances: nextBals }, { merge: true });
+        } catch (err) { console.warn("Balance Firestore err:", err); }
+      }
+
+      await appendAuditLog("BALANCE_ADJUST", u.email || uid, `${delta > 0 ? "+" : ""}${delta} ${coin} -> ${next} ${coin}`, "info");
+      renderUserDrawer(uid);
+      toast(`${delta > 0 ? "Credited" : "Debited"} ${Math.abs(delta)} ${coin} for ${u.name}`, "success");
+      renderApp();
+    }
+
+    async function toggleUserFlag(uid, flagKey, reason = "") {
+      const u = getAllUsers().find(x => x.uid === uid);
+      if (!u) return;
+      const nextVal = !u[flagKey];
+
+      if (u.isSample) {
+        state.sampleUsers[uid][flagKey] = nextVal;
+        if (flagKey === "suspended") state.sampleUsers[uid].suspendReason = nextVal ? reason : "";
+        await appendAuditLog(flagKey === "suspended" ? "USER_SUSPEND_TOGGLE" : "MERCHANT_BADGE_TOGGLE", `[SAMPLE] ${u.email}`, `${flagKey}=${nextVal} ${reason}`, nextVal && flagKey === "suspended" ? "error" : "success");
+        renderUserDrawer(uid);
+        toast(`Updated ${u.name}.`, "info");
+        renderApp();
+        return;
+      }
+
+      const patch = { [flagKey]: nextVal };
+      if (flagKey === "suspended") patch.suspendReason = nextVal ? reason : "";
+
+      writeSharedMirror((mirror) => {
+        mirror.users[uid] = { ...(mirror.users[uid] || { uid, name: u.name, email: u.email }), ...patch };
+      });
+
+      if (db) {
+        try { await setDoc(doc(db, "users", uid), patch, { merge: true }); } catch {}
+      }
+
+      await appendAuditLog(
+        flagKey === "suspended" ? (nextVal ? "USER_SUSPENDED" : "USER_REINSTATED") : "MERCHANT_BADGE",
+        u.email || uid,
+        flagKey === "suspended" ? (nextVal ? `Suspended: ${reason || "Risk review"}` : "Account reinstated") : `Verified Merchant set to ${nextVal}`,
+        flagKey === "suspended" && nextVal ? "error" : "success"
+      );
+      renderUserDrawer(uid);
+      toast(flagKey === "suspended" ? (nextVal ? "Account suspended." : "Account reinstated.") : (nextVal ? "Verified Merchant badge granted!" : "Merchant badge removed."), "success");
+      renderApp();
+    }
+
+    async function toggleOfferActive(offerId) {
+      const offer = getAllOffers().find(o => o.id === offerId);
+      if (!offer) return;
+      const nextActive = offer.isActive === false ? true : false;
+
+      if (offer.isSample) {
+        state.sampleOffers = state.sampleOffers.map(o => o.id === offerId ? { ...o, isActive: nextActive } : o);
+        toast(`[SAMPLE] Offer ${nextActive ? "resumed" : "paused"}.`, "info");
+        renderApp();
+        return;
+      }
+
+      writeSharedMirror((mirror) => {
+        mirror.offers = mirror.offers.map(o => o.id === offerId ? { ...o, isActive: nextActive } : o);
+      });
+
+      if (db) {
+        try { await setDoc(doc(db, "offers", offerId), { isActive: nextActive }, { merge: true }); } catch {}
+      }
+      await appendAuditLog("OFFER_MODERATION", offerId, `Offer ${nextActive ? "resumed" : "paused"}`, "info");
+      toast(`Offer ${offerId} ${nextActive ? "resumed" : "paused"}.`, "success");
+      renderApp();
+    }
+
+    async function deleteOffer(offerId) {
+      const offer = getAllOffers().find(o => o.id === offerId);
+      if (!offer) return;
+
+      if (offer.isSample) {
+        state.sampleOffers = state.sampleOffers.filter(o => o.id !== offerId);
+        toast("[SAMPLE] Offer deleted.", "warning");
+        renderApp();
+        return;
+      }
+
+      writeSharedMirror((mirror) => {
+        mirror.offers = mirror.offers.filter(o => o.id !== offerId);
+      });
+
+      if (db) {
+        try { await deleteDoc(doc(db, "offers", offerId)); } catch {}
+      }
+      await appendAuditLog("OFFER_DELETED", offerId, `Removed ${offer.crypto}/${offer.fiat} ad by ${offer.traderName}`, "error");
+      toast(`Offer ${offerId} removed permanently.`, "warning");
+      renderApp();
+    }
+
+    async function savePlatformConfig(patch, toastMsg = "Platform settings saved!") {
+      state.config = { ...state.config, ...patch };
+      saveAdminConfigLocal();
+      if (db) {
+        try {
+          await setDoc(doc(db, "config", "platform"), {
+            ...state.config,
+            updatedAt: serverTimestamp()
+          }, { merge: true });
+        } catch (err) { console.warn("Config Firestore save notice:", err); }
+      }
+      await appendAuditLog("PLATFORM_CONFIG", "config/platform", JSON.stringify(patch), "info");
+      toast(toastMsg, "success");
+      renderApp();
+    }
+
+    /* =========================================================================
+       10. UI COMPONENT RENDERERS: LOCK SCREEN
+       ========================================================================= */
+    function renderLockScreen() {
+      return `
+        <div class="min-h-screen admin-glow flex items-center justify-center p-4">
+          <div class="anim-in w-full max-w-md bg-card/95 backdrop-blur-xl border border-borderc rounded-3xl p-6 sm:p-8 shadow-2xl space-y-6">
+            <!-- Brand Header -->
+            <div class="flex flex-col items-center text-center space-y-3">
+              <div class="relative w-14 h-14 rounded-2xl brand-grad flex items-center justify-center shadow-mint">
+                ${wayonesMonogramSvg(28)}
+                <span class="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-amberc border-2 border-card flex items-center justify-center text-[9px] font-black text-[#090F0D]">★</span>
+              </div>
+              <div>
+                <div class="flex items-center justify-center gap-2">
+                  <span class="text-2xl font-black tracking-tight text-crisp">Way<span class="text-mint">ones</span></span>
+                  <span class="px-2 py-0.5 rounded-md bg-amberc/18 border border-amberc/45 text-amber-300 text-[10px] font-extrabold uppercase tracking-wider">Admin Console</span>
+                </div>
+                <p class="text-xs text-muted mt-1.5 leading-relaxed">
+                  Private Operations, KYC Verification & Escrow Arbitration Desk
+                </p>
+              </div>
+            </div>
+
+            <!-- Connection Status Pill -->
+            <div class="flex justify-center">
+              ${renderConnectionPill(false)}
+            </div>
+
+            <!-- Option A: Google Sign-In -->
+            <div class="space-y-2.5">
+              <button type="button" ${state.authLoading ? "disabled" : ""} onclick="window.admin.googleSignIn()" class="w-full h-12 px-4 rounded-2xl bg-white hover:bg-slate-100 active:scale-[0.99] text-[#0F172A] font-bold text-sm flex items-center justify-center gap-3 shadow-lg transition-all ${state.authLoading ? "opacity-75 cursor-not-allowed" : ""}">
+                ${state.authLoading
+                  ? `<span class="w-5 h-5 rounded-full border-2 border-[#0F172A] border-t-transparent animate-spin"></span><span>Authenticating Admin...</span>`
+                  : `${googleGIconSvg(20)}<span>Sign in with Google (Firebase Auth)</span>`
+                }
+              </button>
+              <p class="text-[11px] text-center text-muted">
+                ${state.config.authorizedEmails.length
+                  ? `Locked to ${state.config.authorizedEmails.length} authorized admin Gmail(s)`
+                  : `Owner can whitelist authorized admin Gmail addresses in Controls`
+                }
+              </p>
+            </div>
+
+            <div class="flex items-center gap-3">
+              <div class="flex-1 h-px bg-borderc"></div>
+              <span class="text-[11px] font-bold uppercase tracking-wider text-muted">or Quick Passkey Unlock</span>
+              <div class="flex-1 h-px bg-borderc"></div>
+            </div>
+
+            <!-- Option B: Quick Passkey PIN -->
+            <form onsubmit="window.admin.unlockPin(event)" class="space-y-3">
+              <div class="flex items-center gap-2">
+                <input id="admin-pin-inp" type="password" inputmode="numeric" maxlength="10" value="${esc(state.pinInput)}" oninput="window.admin.setPinDraft(this.value)" placeholder="Enter Admin PIN (Default: 2026)" class="flex-1 h-12 px-4 rounded-2xl bg-panel border border-borderc focus:border-mint focus:outline-none text-center font-mono text-base font-bold tracking-[0.25em] text-crisp placeholder:tracking-normal placeholder:font-sans placeholder:text-xs placeholder:text-muted/70" />
+                <button type="submit" class="h-12 px-5 rounded-2xl bg-mint hover:bg-mint-hover text-[#051B12] font-extrabold text-sm shadow-mint shrink-0 transition-all">Unlock</button>
+              </div>
+              <div class="text-[11px] text-center text-muted">
+                Instant local/preview unlock without popup delays. Editable in Controls.
+              </div>
+            </form>
+
+            ${state.authError ? `
+              <div class="p-3.5 rounded-2xl bg-amberc/12 border border-amberc/40 text-xs text-amber-100 leading-relaxed">
+                <div class="font-extrabold text-amber-300 mb-0.5">Authentication Notice</div>
+                ${esc(state.authError)}
+              </div>
+            ` : ""}
+          </div>
+        </div>
+      `;
+    }
+
+    function renderConnectionPill(clickable = true) {
+      const isLive = state.firestoreStatus === "live";
+      const isErr = state.firestoreStatus === "error";
+      const cls = isLive
+        ? "bg-mint/14 border-mint/40 text-mint"
+        : isErr
+          ? "bg-amberc/15 border-amberc/45 text-amber-300"
+          : "bg-panel border-borderc text-muted";
+      const dot = isLive
+        ? `<span class="relative flex h-2 w-2"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-mint opacity-75"></span><span class="relative inline-flex rounded-full h-2 w-2 bg-mint"></span></span>`
+        : isErr
+          ? `<span class="w-2 h-2 rounded-full bg-amberc"></span>`
+          : `<span class="w-2 h-2 rounded-full bg-muted animate-pulse"></span>`;
+      const text = isLive ? "Firestore Live" : isErr ? "Offline / Rules Needed" : "Connecting...";
+
+      return `
+        <div class="relative">
+          <button type="button" ${clickable ? `onclick="window.admin.toggleConnTooltip()"` : ""} class="h-8 px-2.5 sm:px-3 rounded-xl border ${cls} text-[11px] font-extrabold inline-flex items-center gap-1.5 whitespace-nowrap transition-all">
+            ${dot}
+            <span>${text}</span>
+          </button>
+          ${clickable && state.showConnTooltip ? `
+            <div class="anim-in absolute right-0 top-10 z-50 w-72 p-3.5 rounded-2xl bg-card border border-borderc shadow-2xl text-left text-xs space-y-2">
+              <div class="flex items-center justify-between">
+                <span class="font-extrabold ${isLive ? "text-mint" : "text-amber-300"}">${isLive ? "Cloud Firestore Connected" : "Firestore Sync Warning"}</span>
+                <button type="button" onclick="window.admin.toggleConnTooltip()" class="text-muted hover:text-crisp">✕</button>
+              </div>
+              <p class="text-muted leading-relaxed">
+                ${isLive
+                  ? `Real-time listeners active on project <strong class="text-crisp">wayones-595fb</strong> (users, kyc_submissions, trades, offers, adminLogs) + local BroadcastChannel mirror.`
+                  : esc(state.firestoreErrorMsg || "Check Firestore Rules in Firebase Console -> Firestore Database -> Rules.")
+                }
+              </p>
+            </div>
+          ` : ""}
+        </div>
+      `;
+    }
+
+    /* =========================================================================
+       11. TAB 1: OVERVIEW DASHBOARD
+       ========================================================================= */
+    function renderOverviewTab() {
+      const users = getAllUsers();
+      const kycs = getAllKycRecords();
+      const trades = getAllTrades();
+      const logs = getAllLogs();
+
+      const pendingKycs = kycs.filter(k => k.status === "pending");
+      const activeEscrows = trades.filter(t => ["escrow_locked", "paid", "disputed"].includes(t.status));
+      const openDisputes = trades.filter(t => t.status === "disputed");
+
+      const escrowVolUSD = trades.reduce((acc, t) => {
+        const p = COINS[t.crypto]?.priceUSD || 1;
+        return acc + (Number(t.cryptoAmount) || 0) * p;
+      }, 0);
+      const escrowVolINR = escrowVolUSD * FIAT_RATES_USD.INR.rate;
+
+      return `
+        <div class="space-y-6">
+          <!-- Hero Strip -->
+          <section class="admin-glow border border-borderc rounded-3xl p-5 sm:p-6 flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-card">
+            <div>
+              <div class="flex items-center gap-2 flex-wrap mb-1.5">
+                <span class="px-2.5 py-0.5 rounded-full bg-mint/15 border border-mint/40 text-mint text-[10px] font-extrabold uppercase tracking-wider">Operations Live</span>
+                ${state.config.maintenanceMode ? `<span class="px-2.5 py-0.5 rounded-full bg-coral/20 border border-coral/45 text-red-300 text-[10px] font-extrabold uppercase">Maintenance Mode ON</span>` : ""}
+                ${state.sampleMode ? `<span class="px-2.5 py-0.5 rounded-full bg-amberc/20 border border-amberc/45 text-amber-300 text-[10px] font-extrabold uppercase">Sample Preview Active</span>` : ""}
+              </div>
+              <h1 class="text-xl sm:text-2xl font-extrabold text-crisp tracking-tight">Wayones Command Center</h1>
+              <p class="text-xs sm:text-sm text-muted mt-0.5">Real-time KYC verification, P2P escrow arbitration & marketplace risk oversight.</p>
+            </div>
+
+            <div class="flex flex-wrap items-center gap-2">
+              <button type="button" onclick="window.admin.toggleSampleCases()" class="h-10 px-3.5 rounded-xl border text-xs font-extrabold transition-all ${
+                state.sampleMode ? "bg-amberc/15 border-amberc/45 text-amber-300 hover:bg-amberc/25" : "bg-panel border-borderc text-crisp hover:border-mint/50"
+              }">
+                ${state.sampleMode ? "Clear [SAMPLE] Cases" : "Load [SAMPLE] Cases"}
+              </button>
+              <button type="button" onclick="window.admin.setTab('kyc')" class="h-10 px-4 rounded-xl bg-mint hover:bg-mint-hover text-[#051B12] font-extrabold text-xs shadow-mint transition-all">
+                Open KYC Desk →
+              </button>
+            </div>
+          </section>
+
+          <!-- Live KPI Cards -->
+          <section class="grid grid-cols-2 lg:grid-cols-5 gap-3">
+            <div onclick="window.admin.setTab('users')" class="cursor-pointer bg-card hover:border-mint/45 border border-borderc rounded-2xl p-4 transition-all">
+              <div class="text-[11px] font-semibold text-muted">Total Users</div>
+              <div class="text-2xl sm:text-3xl font-black text-crisp tabular-nums mt-1">${users.length}</div>
+              <div class="text-[11px] text-mint font-semibold mt-1">${users.filter(u => u.kycStatus === "verified").length} Verified</div>
+            </div>
+
+            <div onclick="window.admin.setTab('kyc');window.admin.setKycFilter('pending')" class="cursor-pointer bg-card hover:border-amberc/60 border ${pendingKycs.length ? "border-amberc/45" : "border-borderc"} rounded-2xl p-4 transition-all">
+              <div class="flex items-center justify-between gap-1">
+                <span class="text-[11px] font-semibold text-muted">Pending KYCs</span>
+                ${pendingKycs.length ? `<span class="flex h-2.5 w-2.5 relative"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-amberc opacity-75"></span><span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-amberc"></span></span>` : ""}
+              </div>
+              <div class="text-2xl sm:text-3xl font-black ${pendingKycs.length ? "text-amber-300" : "text-crisp"} tabular-nums mt-1">${pendingKycs.length}</div>
+              <div class="text-[11px] text-muted mt-1">Awaiting review</div>
+            </div>
+
+            <div onclick="window.admin.setTab('disputes');window.admin.setDisputeFilter('active')" class="cursor-pointer bg-card hover:border-tealc/60 border border-borderc rounded-2xl p-4 transition-all">
+              <div class="text-[11px] font-semibold text-muted">Active Escrows</div>
+              <div class="text-2xl sm:text-3xl font-black text-tealc tabular-nums mt-1">${activeEscrows.length}</div>
+              <div class="text-[11px] text-muted mt-1">${trades.filter(t => t.status === "released").length} Released total</div>
+            </div>
+
+            <div onclick="window.admin.setTab('disputes');window.admin.setDisputeFilter('disputed')" class="cursor-pointer bg-card hover:border-coral/60 border ${openDisputes.length ? "border-coral/50" : "border-borderc"} rounded-2xl p-4 transition-all">
+              <div class="flex items-center justify-between gap-1">
+                <span class="text-[11px] font-semibold text-muted">Open Disputes</span>
+                ${openDisputes.length ? `<span class="flex h-2.5 w-2.5 relative"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-coral opacity-75"></span><span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-coral"></span></span>` : ""}
+              </div>
+              <div class="text-2xl sm:text-3xl font-black ${openDisputes.length ? "text-red-400" : "text-crisp"} tabular-nums mt-1">${openDisputes.length}</div>
+              <div class="text-[11px] text-muted mt-1">Needs arbitration</div>
+            </div>
+
+            <div class="col-span-2 lg:col-span-1 bg-card border border-borderc rounded-2xl p-4">
+              <div class="text-[11px] font-semibold text-muted">Platform Escrow Vol</div>
+              <div class="text-xl sm:text-2xl font-black text-mint tabular-nums mt-1">${fmtFiat(escrowVolUSD, "USD")}</div>
+              <div class="text-[11px] text-muted tabular-nums mt-1">≈ ${fmtFiat(escrowVolINR, "INR")}</div>
+            </div>
+          </section>
+
+          <!-- Urgent Action Queue + Live Sync Activity Feed -->
+          <div class="grid grid-cols-1 lg:grid-cols-12 gap-5">
+            <!-- Urgent Queue -->
+            <section class="lg:col-span-7 bg-card border border-borderc rounded-3xl p-5 space-y-4">
+              <div class="flex items-center justify-between">
+                <h2 class="text-base font-extrabold text-crisp">Urgent Action Queue</h2>
+                <span class="text-xs font-bold text-muted">${pendingKycs.length + openDisputes.length} Priority Items</span>
+              </div>
+
+              ${!pendingKycs.length && !openDisputes.length ? `
+                <div class="py-10 text-center space-y-2.5 bg-obsidian/60 rounded-2xl border border-borderc">
+                  <div class="w-11 h-11 mx-auto rounded-2xl bg-mint/15 text-mint flex items-center justify-center font-black text-lg">✓</div>
+                  <div class="text-sm font-extrabold text-crisp">All Queues Clear</div>
+                  <p class="text-xs text-muted max-w-xs mx-auto">No pending KYCs or open disputes right now. Want to test the inspection lightbox & arbitration controls?</p>
+                  <button type="button" onclick="window.admin.loadSampleCases()" class="h-9 px-4 rounded-xl bg-mint/15 hover:bg-mint text-mint hover:text-[#051B12] font-extrabold text-xs transition-colors">Load [SAMPLE] Preview Cases</button>
+                </div>
+              ` : `
+                <div class="space-y-2.5">
+                  ${openDisputes.slice(0, 4).map(t => `
+                    <div class="bg-panel border border-coral/40 rounded-2xl p-3.5 flex items-center justify-between gap-3">
+                      <div class="flex items-center gap-3 min-w-0">
+                        ${cryptoLogoSvg(t.crypto, 32)}
+                        <div class="min-w-0">
+                          <div class="flex items-center gap-1.5 flex-wrap">
+                            <span class="px-2 py-0.5 rounded bg-coral text-white text-[10px] font-extrabold uppercase">Dispute</span>
+                            <span class="text-xs sm:text-sm font-extrabold text-crisp truncate">${fmtCrypto(t.cryptoAmount, t.crypto)} ${t.crypto} (${fmtFiat(t.fiatAmount, t.fiat)})</span>
+                          </div>
+                          <div class="text-[11px] text-muted truncate mt-0.5">${esc(t.buyerName)} vs ${esc(t.sellerName)} • ${timeAgo(t.dispute?.openedAt || t.createdAt)}</div>
+                        </div>
+                      </div>
+                      <button type="button" onclick="window.admin.openTradeInspect('${esc(t.id)}')" class="h-9 px-3.5 rounded-xl bg-coral hover:bg-red-500 text-white font-extrabold text-xs shrink-0">Review Now</button>
+                    </div>
+                  `).join("")}
+
+                  ${pendingKycs.slice(0, 4).map(k => `
+                    <div class="bg-panel border border-amberc/40 rounded-2xl p-3.5 flex items-center justify-between gap-3">
+                      <div class="flex items-center gap-3 min-w-0">
+                        ${renderAvatar(k.photoURL, k.fullName, "w-9 h-9 text-xs")}
+                        <div class="min-w-0">
+                          <div class="flex items-center gap-1.5 flex-wrap">
+                            <span class="px-2 py-0.5 rounded bg-amberc/20 text-amber-300 text-[10px] font-extrabold uppercase">Pending KYC</span>
+                            <span class="text-xs sm:text-sm font-extrabold text-crisp truncate">${esc(k.fullName)}</span>
+                          </div>
+                          <div class="text-[11px] text-muted truncate mt-0.5">${esc(k.country)} • ${esc(k.docType)} • ${timeAgo(k.submittedAt)}</div>
+                        </div>
+                      </div>
+                      <button type="button" onclick="window.admin.openKycInspect('${esc(k.uid)}')" class="h-9 px-3.5 rounded-xl bg-mint hover:bg-mint-hover text-[#051B12] font-extrabold text-xs shrink-0 shadow-mint">Review Now</button>
+                    </div>
+                  `).join("")}
+                </div>
+              `}
+            </section>
+
+            <!-- Live Sync Activity Feed -->
+            <section class="lg:col-span-5 bg-card border border-borderc rounded-3xl p-5 space-y-4">
+              <div class="flex items-center justify-between">
+                <h2 class="text-base font-extrabold text-crisp">Live Sync Activity Feed</h2>
+                <span class="inline-flex items-center gap-1 text-[11px] font-bold text-mint"><span class="w-1.5 h-1.5 rounded-full bg-mint animate-pulse"></span>Real-time</span>
+              </div>
+
+              ${!logs.length ? `
+                <div class="py-10 text-center text-xs text-muted bg-obsidian/60 rounded-2xl border border-borderc">
+                  Admin decisions, KYC approvals, and dispute rulings will stream here in real time.
+                </div>
+              ` : `
+                <div class="space-y-2.5 max-h-[340px] overflow-y-auto pr-1">
+                  ${logs.slice(0, 12).map(l => {
+                    const dotCls = l.severity === "success" ? "bg-mint" : l.severity === "error" ? "bg-coral" : l.severity === "warning" ? "bg-amberc" : "bg-tealc";
+                    return `
+                      <div class="p-3 rounded-2xl bg-panel border border-borderc flex items-start gap-2.5">
+                        <span class="w-2 h-2 rounded-full ${dotCls} mt-1.5 shrink-0"></span>
+                        <div class="min-w-0 flex-1">
+                          <div class="flex items-center justify-between gap-2">
+                            <span class="text-[11px] font-extrabold text-crisp truncate">${esc(l.action)}</span>
+                            <span class="text-[10px] text-muted shrink-0">${timeAgo(l.createdAt || l.serverAt)}</span>
+                          </div>
+                          <div class="text-xs text-muted mt-0.5 break-words leading-snug">${esc(l.details)}</div>
+                          <div class="text-[10px] text-mint/80 mt-1 truncate">Target: ${esc(l.target)} • by ${esc(l.adminEmail)}</div>
+                        </div>
+                      </div>
+                    `;
+                  }).join("")}
+                </div>
+              `}
+            </section>
+          </div>
+        </div>
+      `;
+    }
+
+    /* =========================================================================
+       12. TAB 2: KYC VERIFICATION DESK & 3-IMAGE INSPECTION MODAL
+       ========================================================================= */
+    function kycBadgeHtml(status) {
+      const s = normalizeKycStatus(status);
+      if (s === "verified") return `<span class="px-2.5 py-0.5 rounded-full bg-mint/15 border border-mint/45 text-mint text-[10px] font-extrabold uppercase">Verified ✓</span>`;
+      if (s === "pending")  return `<span class="px-2.5 py-0.5 rounded-full bg-amberc/15 border border-amberc/45 text-amber-300 text-[10px] font-extrabold uppercase">Pending</span>`;
+      if (s === "rejected") return `<span class="px-2.5 py-0.5 rounded-full bg-coral/15 border border-coral/45 text-red-300 text-[10px] font-extrabold uppercase">Rejected</span>`;
+      return `<span class="px-2.5 py-0.5 rounded-full bg-panel border border-borderc text-muted text-[10px] font-extrabold uppercase">Unverified</span>`;
+    }
+
+    function renderKycDeskTab() {
+      const all = getAllKycRecords();
+      const counts = {
+        pending: all.filter(k => k.status === "pending").length,
+        verified: all.filter(k => k.status === "verified").length,
+        rejected: all.filter(k => k.status === "rejected").length,
+        all: all.length
+      };
+      const q = (state.kycSearch || "").trim().toLowerCase();
+      const filtered = all.filter(k => {
+        if (state.kycFilter !== "all" && k.status !== state.kycFilter) return false;
+        if (!q) return true;
+        return [k.fullName, k.name, k.email, k.uid, k.country, k.docType, k.docNumber]
+          .some(v => String(v || "").toLowerCase().includes(q));
+      });
+
+      return `
+        <div class="space-y-5">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+              <h1 class="text-xl sm:text-2xl font-extrabold text-crisp">KYC Verification Desk</h1>
+              <p class="text-xs sm:text-sm text-muted mt-0.5">Inspect uploaded National ID documents, zoom/rotate photos, and approve or reject in 1 tap.</p>
+            </div>
+            <button type="button" onclick="window.admin.toggleSampleCases()" class="h-10 px-3.5 rounded-xl bg-panel border border-borderc hover:border-mint/50 text-xs font-bold text-crisp self-start sm:self-auto">
+              ${state.sampleMode ? "Hide [SAMPLE] KYCs" : "+ Load [SAMPLE] KYC"}
+            </button>
+          </div>
+
+          <!-- Filter Pills + Search Bar -->
+          <div class="bg-card border border-borderc rounded-2xl p-3.5 space-y-3">
+            <div class="flex items-center gap-2 overflow-x-auto no-scrollbar">
+              ${[
+                { id: "pending", label: "Pending", badge: "bg-amberc text-[#090F0D]" },
+                { id: "verified", label: "Verified", badge: "bg-mint text-[#051B12]" },
+                { id: "rejected", label: "Rejected", badge: "bg-coral text-white" },
+                { id: "all", label: "All", badge: "bg-panel text-crisp" }
+              ].map(f => {
+                const active = state.kycFilter === f.id;
+                return `
+                  <button type="button" onclick="window.admin.setKycFilter('${f.id}')" class="h-9 px-3.5 rounded-xl text-xs font-extrabold whitespace-nowrap border flex items-center gap-2 transition-all ${
+                    active ? "bg-mint text-[#051B12] border-mint shadow-mint" : "bg-panel text-muted border-borderc hover:text-crisp"
+                  }">
+                    <span>${f.label}</span>
+                    <span class="px-1.5 py-0.5 rounded-full text-[10px] font-black leading-none ${active ? "bg-[#051B12]/20 text-[#051B12]" : f.badge}">${counts[f.id]}</span>
+                  </button>
+                `;
+              }).join("")}
+            </div>
+
+            <input type="search" value="${esc(state.kycSearch)}" oninput="window.admin.setKycSearch(this.value)" placeholder="Search by Name, Gmail, UID, Country, or ID Number..." class="w-full h-11 px-4 rounded-xl bg-panel border border-borderc focus:border-mint focus:outline-none text-sm text-crisp placeholder-muted/70" />
+          </div>
+
+          <!-- KYC Cards List -->
+          ${!filtered.length ? `
+            <div class="bg-card border border-borderc rounded-3xl p-10 text-center space-y-2.5">
+              <div class="text-2xl">🪪</div>
+              <div class="text-sm font-extrabold text-crisp">No KYC Submissions Found</div>
+              <p class="text-xs text-muted">Submissions from <code class="text-mint">wayones-user.html</code> appear here automatically in real time.</p>
+            </div>
+          ` : `
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+              ${filtered.map(k => `
+                <div class="bg-card hover:border-mint/50 border ${k.status === "pending" ? "border-amberc/40" : "border-borderc"} rounded-2xl p-4 sm:p-5 flex flex-col justify-between gap-4 transition-all shadow-card">
+                  <div class="space-y-3">
+                    <div class="flex items-start justify-between gap-2">
+                      <div class="flex items-center gap-3 min-w-0">
+                        ${renderAvatar(k.photoURL, k.fullName, "w-11 h-11 text-sm")}
+                        <div class="min-w-0">
+                          <div class="flex items-center gap-1.5 flex-wrap">
+                            <span class="font-extrabold text-crisp text-sm truncate">${esc(k.fullName)}</span>
+                            ${k.isSample ? `<span class="px-1.5 py-0.5 rounded bg-amberc/20 text-amber-300 text-[9px] font-extrabold">SAMPLE</span>` : ""}
+                          </div>
+                          <div class="text-xs text-muted truncate">${esc(k.email)}</div>
+                        </div>
+                      </div>
+                      ${kycBadgeHtml(k.status)}
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-2 text-xs bg-panel border border-borderc rounded-xl p-3">
+                      <div>
+                        <div class="text-[10px] text-muted">Country</div>
+                        <div class="font-bold text-crisp truncate mt-0.5">${esc(k.country)}</div>
+                      </div>
+                      <div>
+                        <div class="text-[10px] text-muted">ID Type</div>
+                        <div class="font-bold text-mint truncate mt-0.5">${esc(k.docType)}</div>
+                      </div>
+                      <div>
+                        <div class="text-[10px] text-muted">Document Number</div>
+                        <div class="font-mono font-bold text-crisp truncate mt-0.5">${esc(k.docNumber)}</div>
+                      </div>
+                      <div>
+                        <div class="text-[10px] text-muted">Submitted</div>
+                        <div class="font-semibold text-crisp/90 truncate mt-0.5">${timeAgo(k.submittedAt)}</div>
+                      </div>
+                    </div>
+
+                    ${k.rejectionReason ? `
+                      <div class="p-2.5 rounded-xl bg-coral/12 border border-coral/35 text-[11px] text-red-200">
+                        <strong>Rejection Note:</strong> ${esc(k.rejectionReason)}
+                      </div>
+                    ` : ""}
+                  </div>
+
+                  <div class="flex items-center gap-2 pt-1">
+                    <button type="button" onclick="window.admin.openKycInspect('${esc(k.uid)}')" class="flex-1 h-10 px-4 rounded-xl bg-mint hover:bg-mint-hover text-[#051B12] font-extrabold text-xs shadow-mint transition-all">
+                      Inspect 3 Documents
+                    </button>
+                    ${k.status !== "verified" ? `
+                      <button type="button" onclick="window.admin.confirmApproveKyc('${esc(k.uid)}')" class="h-10 px-3.5 rounded-xl bg-panel hover:bg-mint/20 border border-mint/40 text-mint font-extrabold text-xs transition-all">
+                        Approve ✓
+                      </button>
+                    ` : ""}
+                  </div>
+                </div>
+              `).join("")}
+            </div>
+          `}
+        </div>
+      `;
+    }
+
+    function openKycInspectModal(uid) {
+      const k = getAllKycRecords().find(x => x.uid === uid);
+      if (!k) { toast("KYC submission not found.", "error"); return; }
+      state.inspectKycUid = uid;
+      state.kycRejectReasonDraft = k.rejectionReason || "";
+
+      const quickReasons = [
+        "Blurry / Unreadable ID",
+        "Selfie does not match ID",
+        "Expired or Invalid Document",
+        "Name mismatch"
+      ];
+
+      const docCard = (title, src) => `
+        <div class="bg-panel border border-borderc rounded-2xl p-3 space-y-2">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-extrabold text-crisp">${title}</span>
+            ${src ? `<button type="button" onclick="window.admin.openLightbox('${esc(title)}', '${esc(src)}')" class="px-2 py-0.5 rounded-lg bg-mint/15 hover:bg-mint text-mint hover:text-[#051B12] text-[10px] font-extrabold transition-colors">Zoom / Rotate ⤢</button>` : ""}
+          </div>
+          <div ${src ? `onclick="window.admin.openLightbox('${esc(title)}', '${esc(src)}')"` : ""} class="cursor-pointer h-44 rounded-xl bg-obsidian border border-borderc hover:border-mint/50 overflow-hidden flex items-center justify-center p-2 transition-colors">
+            ${renderDocumentVisual(src, title, k, false)}
+          </div>
+        </div>
+      `;
+
+      openModal(`
+        <div class="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/85 backdrop-blur-sm" onclick="window.admin.backdropClose(event)">
+          <div class="anim-in w-full sm:max-w-4xl max-h-[94vh] flex flex-col bg-card border-t sm:border border-borderc rounded-t-3xl sm:rounded-3xl shadow-2xl overflow-hidden" onclick="event.stopPropagation()">
+            <!-- Modal Header -->
+            <div class="px-5 py-4 bg-panel border-b border-borderc flex items-center justify-between gap-3">
+              <div class="flex items-center gap-3 min-w-0">
+                ${renderAvatar(k.photoURL, k.fullName, "w-10 h-10 text-sm")}
+                <div class="min-w-0">
+                  <div class="flex items-center gap-2 flex-wrap">
+                    <h3 class="text-base font-extrabold text-crisp truncate">${esc(k.fullName)}</h3>
+                    ${kycBadgeHtml(k.status)}
+                    ${k.isSample ? `<span class="px-1.5 py-0.5 rounded bg-amberc/20 text-amber-300 text-[10px] font-extrabold">SAMPLE</span>` : ""}
+                  </div>
+                  <p class="text-xs text-muted truncate">${esc(k.email)} • UID: <span class="font-mono">${esc(k.uid)}</span></p>
+                </div>
+              </div>
+              <button type="button" onclick="window.admin.closeModal()" class="w-9 h-9 rounded-xl bg-obsidian hover:bg-borderc text-muted flex items-center justify-center shrink-0">✕</button>
+            </div>
+
+            <!-- Scrollable Body -->
+            <div class="p-5 overflow-y-auto space-y-5">
+              <!-- Metadata Grid -->
+              <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-obsidian border border-borderc rounded-2xl p-4 text-xs">
+                <div>
+                  <div class="text-muted">Country</div>
+                  <div class="font-extrabold text-crisp mt-0.5">${esc(k.country)}</div>
+                </div>
+                <div>
+                  <div class="text-muted">Document Type</div>
+                  <div class="font-extrabold text-mint mt-0.5">${esc(k.docType)}</div>
+                </div>
+                <div>
+                  <div class="text-muted">ID Number</div>
+                  <div class="font-mono font-extrabold text-crisp mt-0.5 break-all">${esc(k.docNumber)}</div>
+                </div>
+                <div>
+                  <div class="text-muted">Date of Birth / Submitted</div>
+                  <div class="font-bold text-crisp mt-0.5">${esc(k.dob)} • ${timeAgo(k.submittedAt)}</div>
+                </div>
+              </div>
+
+              <!-- 3-Image Document Viewer -->
+              <div class="space-y-2">
+                <div class="flex items-center justify-between">
+                  <span class="text-xs font-extrabold uppercase tracking-wider text-muted">3-Document Verification Bundle (Tap any image for Fullscreen Zoom & Rotate)</span>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                  ${docCard("1. ID Front", k.frontImg)}
+                  ${docCard("2. ID Back", k.backImg)}
+                  ${docCard("3. Live Selfie + Note", k.selfieImg)}
+                </div>
+              </div>
+
+              <!-- Decision Controls: 1-Tap Approve & Reject with Reason -->
+              <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 pt-2 border-t border-borderc">
+                <!-- Approve Box -->
+                <div class="lg:col-span-5 bg-mint/10 border border-mint/35 rounded-2xl p-4 flex flex-col justify-between gap-3">
+                  <div>
+                    <div class="text-sm font-extrabold text-mint">Approve National ID</div>
+                    <p class="text-xs text-emerald-100/80 mt-1 leading-relaxed">
+                      Instantly sets <code class="text-mint">kycStatus: 'verified'</code> in Firestore & BroadcastChannel, unlocking Verified Trader badge on the user's screen.
+                    </p>
+                  </div>
+                  <button type="button" onclick="window.admin.approveKyc('${esc(k.uid)}')" class="w-full h-12 rounded-2xl bg-mint hover:bg-mint-hover text-[#051B12] font-extrabold text-sm shadow-mint transition-all">
+                    ✓ Approve & Verify User
+                  </button>
+                </div>
+
+                <!-- Reject with Reason Box -->
+                <div class="lg:col-span-7 bg-coral/10 border border-coral/35 rounded-2xl p-4 space-y-3">
+                  <div class="text-sm font-extrabold text-red-300">Reject & Request Resubmission</div>
+                  <div class="flex flex-wrap gap-1.5">
+                    ${quickReasons.map(r => `
+                      <button type="button" onclick="window.admin.fillRejectReason('${esc(r)}')" class="px-2.5 py-1 rounded-lg bg-obsidian hover:bg-coral/25 border border-borderc hover:border-coral/50 text-[11px] font-bold text-crisp transition-colors">${esc(r)}</button>
+                    `).join("")}
+                  </div>
+                  <textarea id="kyc-reject-reason" rows="2" oninput="window.admin.setRejectDraft(this.value)" placeholder="Enter exact rejection reason shown to user..." class="w-full p-3 rounded-xl bg-obsidian border border-borderc focus:border-coral focus:outline-none text-xs sm:text-sm text-crisp">${esc(state.kycRejectReasonDraft)}</textarea>
+                  <button type="button" onclick="window.admin.rejectKyc('${esc(k.uid)}')" class="w-full h-11 rounded-xl bg-coral hover:bg-red-500 text-white font-extrabold text-xs sm:text-sm transition-all">
+                    ✕ Reject KYC with Reason
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      `);
+    }
+
+    /* =========================================================================
+       13. TAB 3: DISPUTE & ESCROW ARBITRATION CONSOLE
+       ========================================================================= */
+    function tradeStatusBadge(status, disputeStatus = "") {
+      if (status === "disputed") return `<span class="px-2.5 py-0.5 rounded-full bg-coral/20 border border-coral/50 text-red-300 text-[10px] font-extrabold uppercase">Disputed</span>`;
+      if (status === "paid") return `<span class="px-2.5 py-0.5 rounded-full bg-tealc/20 border border-tealc/45 text-tealc text-[10px] font-extrabold uppercase">Fiat Paid</span>`;
+      if (status === "escrow_locked") return `<span class="px-2.5 py-0.5 rounded-full bg-amberc/15 border border-amberc/45 text-amber-300 text-[10px] font-extrabold uppercase">Escrow Locked</span>`;
+      if (status === "released") return `<span class="px-2.5 py-0.5 rounded-full bg-mint/15 border border-mint/45 text-mint text-[10px] font-extrabold uppercase">${disputeStatus === "resolved_buyer" ? "Resolved → Buyer" : "Released ✓"}</span>`;
+      return `<span class="px-2.5 py-0.5 rounded-full bg-panel border border-borderc text-muted text-[10px] font-extrabold uppercase">${disputeStatus === "resolved_seller" ? "Refunded → Seller" : "Cancelled"}</span>`;
+    }
+
+    function renderDisputesTab() {
+      const all = getAllTrades();
+      const counts = {
+        disputed: all.filter(t => t.status === "disputed").length,
+        active: all.filter(t => ["escrow_locked", "paid", "disputed"].includes(t.status)).length,
+        resolved: all.filter(t => ["released", "cancelled"].includes(t.status)).length,
+        all: all.length
+      };
+
+      const filtered = all.filter(t => {
+        if (state.disputeFilter === "disputed") return t.status === "disputed";
+        if (state.disputeFilter === "active") return ["escrow_locked", "paid", "disputed"].includes(t.status);
+        if (state.disputeFilter === "resolved") return ["released", "cancelled"].includes(t.status);
+        return true;
+      });
+
+      return `
+        <div class="space-y-5">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+              <h1 class="text-xl sm:text-2xl font-extrabold text-crisp">Dispute & Escrow Arbitration</h1>
+              <p class="text-xs sm:text-sm text-muted mt-0.5">Review frozen escrow orders, verify bank UTR & payment receipts, chat as Arbitrator, and issue binding verdicts.</p>
+            </div>
+            <button type="button" onclick="window.admin.toggleSampleCases()" class="h-10 px-3.5 rounded-xl bg-panel border border-borderc hover:border-mint/50 text-xs font-bold text-crisp self-start sm:self-auto">
+              ${state.sampleMode ? "Hide [SAMPLE] Disputes" : "+ Load [SAMPLE] Dispute"}
+            </button>
+          </div>
+
+          <!-- Filter Pills -->
+          <div class="flex items-center gap-2 overflow-x-auto no-scrollbar bg-card border border-borderc rounded-2xl p-3">
+            ${[
+              { id: "disputed", label: "Disputed", badge: "bg-coral text-white" },
+              { id: "active", label: "Active Escrow", badge: "bg-tealc text-[#051B12]" },
+              { id: "resolved", label: "Resolved", badge: "bg-mint text-[#051B12]" },
+              { id: "all", label: "All Trades", badge: "bg-panel text-crisp" }
+            ].map(f => {
+              const active = state.disputeFilter === f.id;
+              return `
+                <button type="button" onclick="window.admin.setDisputeFilter('${f.id}')" class="h-9 px-3.5 rounded-xl text-xs font-extrabold whitespace-nowrap border flex items-center gap-2 transition-all ${
+                  active ? "bg-mint text-[#051B12] border-mint shadow-mint" : "bg-panel text-muted border-borderc hover:text-crisp"
+                }">
+                  <span>${f.label}</span>
+                  <span class="px-1.5 py-0.5 rounded-full text-[10px] font-black leading-none ${active ? "bg-[#051B12]/20 text-[#051B12]" : f.badge}">${counts[f.id]}</span>
+                </button>
+              `;
+            }).join("")}
+          </div>
+
+          <!-- Trades / Disputes List -->
+          ${!filtered.length ? `
+            <div class="bg-card border border-borderc rounded-3xl p-10 text-center space-y-2.5">
+              <div class="text-2xl">⚖️</div>
+              <div class="text-sm font-extrabold text-crisp">No Trades in This Category</div>
+              <p class="text-xs text-muted">Live P2P escrows and user-filed disputes sync here automatically.</p>
+            </div>
+          ` : `
+            <div class="flex flex-col gap-3">
+              ${filtered.map(t => `
+                <div onclick="window.admin.openTradeInspect('${esc(t.id)}')" class="cursor-pointer bg-card hover:bg-panel border ${t.status === "disputed" ? "border-coral/50" : "border-borderc hover:border-mint/45"} rounded-2xl p-4 sm:p-5 transition-all flex flex-col lg:flex-row lg:items-center justify-between gap-4 shadow-card">
+                  <div class="flex items-start gap-3.5 min-w-0">
+                    ${cryptoLogoSvg(t.crypto, 38)}
+                    <div class="min-w-0">
+                      <div class="flex items-center gap-2 flex-wrap">
+                        <span class="font-mono text-xs font-bold text-mint">${esc(t.id)}</span>
+                        ${tradeStatusBadge(t.status, t.disputeStatus)}
+                        ${t.isSample ? `<span class="px-1.5 py-0.5 rounded bg-amberc/20 text-amber-300 text-[9px] font-extrabold">SAMPLE</span>` : ""}
+                      </div>
+                      <div class="text-base font-extrabold text-crisp tabular-nums mt-1">
+                        ${fmtCrypto(t.cryptoAmount, t.crypto)} ${t.crypto} <span class="text-muted font-semibold text-sm">↔ ${fmtFiat(t.fiatAmount, t.fiat)}</span>
+                      </div>
+                      <div class="text-xs text-muted mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5">
+                        <span>Buyer: <strong class="text-crisp">${esc(t.buyerName)}</strong></span>
+                        <span>•</span>
+                        <span>Seller: <strong class="text-crisp">${esc(t.sellerName)}</strong></span>
+                        <span>•</span>
+                        <span>${esc(t.paymentMethod)}</span>
+                        ${t.utrReference ? `<span>• UTR: <strong class="font-mono text-mint">${esc(t.utrReference)}</strong></span>` : ""}
+                      </div>
+                      ${t.dispute?.reason ? `<div class="text-xs text-red-300 font-semibold mt-1.5">Dispute: "${esc(t.dispute.reason)}"</div>` : ""}
+                    </div>
+                  </div>
+
+                  <div class="flex items-center justify-between lg:flex-col lg:items-end gap-2 pt-3 lg:pt-0 border-t lg:border-t-0 border-borderc shrink-0">
+                    <span class="text-[11px] text-muted">${timeAgo(t.createdAt)}</span>
+                    <span class="h-9 px-4 rounded-xl inline-flex items-center font-extrabold text-xs ${t.status === "disputed" ? "bg-coral text-white" : "bg-mint text-[#051B12]"}">
+                      Inspect & Arbitrate →
+                    </span>
+                  </div>
+                </div>
+              `).join("")}
+            </div>
+          `}
+        </div>
+      `;
+    }
+
+    function renderTradeInspectModal(tradeId) {
+      const t = getAllTrades().find(x => x.id === tradeId);
+      if (!t) { toast("Trade case not found.", "error"); return; }
+      state.inspectTradeId = tradeId;
+
+      const users = getAllUsers();
+      const buyer = users.find(u => u.uid === t.buyerUid);
+      const seller = users.find(u => u.uid === t.sellerUid);
+      const isFinal = ["released", "cancelled"].includes(t.status);
+      const remMs = Math.max(0, toMillis(t.expiresAt) - Date.now());
+      const timerLabel = isFinal ? "Closed" : remMs > 0 ? `${Math.ceil(remMs / 60000)}m remaining` : "Timer Expired";
+
+      openModal(`
+        <div class="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/85 backdrop-blur-sm" onclick="window.admin.backdropClose(event)">
+          <div class="anim-in w-full sm:max-w-5xl max-h-[94vh] flex flex-col bg-card border-t sm:border border-borderc rounded-t-3xl sm:rounded-3xl shadow-2xl overflow-hidden" onclick="event.stopPropagation()">
+            <!-- Header -->
+            <div class="px-5 py-4 bg-panel border-b border-borderc flex items-center justify-between gap-3">
+              <div class="flex items-center gap-3 min-w-0">
+                ${cryptoLogoSvg(t.crypto, 34)}
+                <div class="min-w-0">
+                  <div class="flex items-center gap-2 flex-wrap">
+                    <h3 class="text-base font-extrabold text-crisp font-mono">${esc(t.id)}</h3>
+                    ${tradeStatusBadge(t.status, t.disputeStatus)}
+                    <span class="px-2 py-0.5 rounded-lg bg-obsidian border border-borderc text-[10px] font-bold text-muted">⏱ ${timerLabel}</span>
+                  </div>
+                  <p class="text-xs text-muted mt-0.5">
+                    <strong class="text-crisp tabular-nums">${fmtCrypto(t.cryptoAmount, t.crypto)} ${t.crypto}</strong> ↔ <strong class="text-mint tabular-nums">${fmtFiat(t.fiatAmount, t.fiat)}</strong> • ${esc(t.paymentMethod)}
+                  </p>
+                </div>
+              </div>
+              <button type="button" onclick="window.admin.closeModal()" class="w-9 h-9 rounded-xl bg-obsidian hover:bg-borderc text-muted flex items-center justify-center shrink-0">✕</button>
+            </div>
+
+            <!-- Scrollable Content -->
+            <div class="p-5 overflow-y-auto grid grid-cols-1 lg:grid-cols-12 gap-5">
+              <!-- Left Column: Parties, Evidence, Terms & Verdict -->
+              <div class="lg:col-span-6 space-y-4">
+                <!-- Buyer & Seller Summary Cards -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div class="bg-panel border border-borderc rounded-2xl p-3.5 space-y-1.5">
+                    <div class="flex items-center justify-between">
+                      <span class="text-[10px] font-extrabold uppercase text-mint">Buyer</span>
+                      ${kycBadgeHtml(buyer?.kycStatus || "verified")}
+                    </div>
+                    <div class="text-sm font-extrabold text-crisp truncate">${esc(t.buyerName)}</div>
+                    <div class="text-[11px] text-muted truncate">${esc(buyer?.email || t.buyerUid || "Counterparty")}</div>
+                    <div class="text-[11px] text-crisp/80">Completion: <strong class="text-mint">99.2%</strong></div>
+                  </div>
+                  <div class="bg-panel border border-borderc rounded-2xl p-3.5 space-y-1.5">
+                    <div class="flex items-center justify-between">
+                      <span class="text-[10px] font-extrabold uppercase text-amber-300">Seller</span>
+                      ${kycBadgeHtml(seller?.kycStatus || "verified")}
+                    </div>
+                    <div class="text-sm font-extrabold text-crisp truncate">${esc(t.sellerName)}</div>
+                    <div class="text-[11px] text-muted truncate">${esc(seller?.email || t.sellerUid || "Counterparty")}</div>
+                    <div class="text-[11px] text-crisp/80">Completion: <strong class="text-mint">99.5%</strong></div>
+                  </div>
+                </div>
+
+                <!-- UTR & Frozen Terms Hash -->
+                <div class="bg-obsidian border border-borderc rounded-2xl p-4 space-y-2.5 text-xs">
+                  <div class="flex items-center justify-between gap-2">
+                    <span class="text-muted">Bank UTR / Reference</span>
+                    <div class="flex items-center gap-1.5">
+                      <span class="font-mono font-extrabold text-mint">${esc(t.utrReference || "Not submitted")}</span>
+                      ${t.utrReference ? `<button type="button" onclick="window.admin.copy('${esc(t.utrReference)}', 'UTR Copied!')" class="px-2 py-0.5 rounded bg-panel border border-borderc text-[10px] text-crisp font-bold">Copy</button>` : ""}
+                    </div>
+                  </div>
+                  <div class="flex items-center justify-between gap-2">
+                    <span class="text-muted">Frozen Terms SHA Hash</span>
+                    <span class="px-2 py-0.5 rounded bg-mint/12 border border-mint/30 font-mono text-[10px] text-mint">🔒 ${esc((t.termsHash || "").slice(0, 18))}…</span>
+                  </div>
+                  <div class="pt-2 border-t border-borderc text-muted leading-relaxed">
+                    <strong class="text-crisp">Frozen Offer Terms:</strong> ${esc(t.frozenTerms)}
+                  </div>
+                </div>
+
+                <!-- Dispute Reason & Payment Proof Lightbox -->
+                ${t.dispute ? `
+                  <div class="bg-coral/12 border border-coral/40 rounded-2xl p-4 space-y-3">
+                    <div>
+                      <div class="text-[11px] font-extrabold uppercase text-red-300">Dispute Claim by ${esc(t.dispute.openedByName || "Party")}</div>
+                      <div class="text-sm font-bold text-crisp mt-0.5">${esc(t.dispute.reason)}</div>
+                      <p class="text-xs text-red-100/85 mt-1 leading-relaxed">${esc(t.dispute.description || "No additional narrative provided.")}</p>
+                    </div>
+                    ${t.dispute.proofImg ? `
+                      <div>
+                        <div class="flex items-center justify-between mb-1.5">
+                          <span class="text-[11px] font-bold text-crisp">Uploaded Payment Proof</span>
+                          <button type="button" onclick="window.admin.openLightbox('Payment Proof — ${esc(t.id)}', '${esc(t.dispute.proofImg)}', { amountLabel: '${esc(fmtFiat(t.fiatAmount, t.fiat))}', utr: '${esc(t.utrReference)}', seller: '${esc(t.sellerName)}' })" class="px-2.5 py-1 rounded-lg bg-mint/15 hover:bg-mint text-mint hover:text-[#051B12] text-[10px] font-extrabold transition-colors">Inspect Fullscreen ⤢</button>
+                        </div>
+                        <div onclick="window.admin.openLightbox('Payment Proof — ${esc(t.id)}', '${esc(t.dispute.proofImg)}', { amountLabel: '${esc(fmtFiat(t.fiatAmount, t.fiat))}', utr: '${esc(t.utrReference)}', seller: '${esc(t.sellerName)}' })" class="cursor-pointer h-40 rounded-xl bg-obsidian border border-borderc hover:border-mint/50 overflow-hidden flex items-center justify-center p-2">
+                          ${renderDocumentVisual(t.dispute.proofImg, "Payment Proof", { amountLabel: fmtFiat(t.fiatAmount, t.fiat), utr: t.utrReference, seller: t.sellerName }, false)}
+                        </div>
+                      </div>
+                    ` : `<div class="text-xs text-muted italic">No payment screenshot attached yet.</div>`}
+                  </div>
+                ` : ""}
+
+                <!-- Binding Verdict Controls -->
+                <div class="bg-panel border border-borderc rounded-2xl p-4 space-y-2.5">
+                  <div class="text-xs font-extrabold uppercase tracking-wider text-muted">Binding Arbitration Verdicts</div>
+                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    <button type="button" ${isFinal ? "disabled" : ""} onclick="window.admin.confirmVerdict('${esc(t.id)}', 'release_buyer')" class="h-11 px-3 rounded-xl bg-mint hover:bg-mint-hover text-[#051B12] font-extrabold text-xs shadow-mint transition-all ${isFinal ? "opacity-45 cursor-not-allowed" : ""}">
+                      ✓ Release Crypto to Buyer
+                    </button>
+                    <button type="button" ${isFinal ? "disabled" : ""} onclick="window.admin.confirmVerdict('${esc(t.id)}', 'refund_seller')" class="h-11 px-3 rounded-xl bg-coral hover:bg-red-500 text-white font-extrabold text-xs transition-all ${isFinal ? "opacity-45 cursor-not-allowed" : ""}">
+                      ↩ Refund Crypto to Seller
+                    </button>
+                  </div>
+                  <button type="button" ${isFinal ? "disabled" : ""} onclick="window.admin.executeVerdict('${esc(t.id)}', 'hold')" class="w-full h-10 px-3 rounded-xl bg-amberc/15 hover:bg-amberc/25 border border-amberc/45 text-amber-300 font-extrabold text-xs transition-all ${isFinal ? "opacity-45 cursor-not-allowed" : ""}">
+                    ⏸ Hold & Request More Evidence in Chat
+                  </button>
+                </div>
+              </div>
+
+              <!-- Right Column: Live Trade Chat & Arbitrator Intervention -->
+              <div class="lg:col-span-6 bg-obsidian border border-borderc rounded-2xl overflow-hidden flex flex-col h-[460px] lg:h-[600px]">
+                <div class="px-4 py-3 bg-panel border-b border-borderc flex items-center justify-between">
+                  <div class="flex items-center gap-2">
+                    <span class="w-2 h-2 rounded-full bg-amberc animate-pulse"></span>
+                    <span class="text-xs font-extrabold text-crisp">Live Escrow Chat & Arbitrator Channel</span>
+                  </div>
+                  <span class="text-[10px] font-bold text-mint">${(t.messages || []).length} Messages</span>
+                </div>
+
+                <div id="arb-chat-feed" class="flex-1 overflow-y-auto p-3.5 space-y-2.5">
+                  ${(t.messages || []).map(msg => {
+                    if (msg.senderRole === "system") {
+                      return `<div class="flex justify-center"><div class="px-3 py-1.5 rounded-xl bg-mint/10 border border-mint/25 text-[11px] text-muted text-center max-w-[94%]">${esc(msg.text)}</div></div>`;
+                    }
+                    if (msg.senderRole === "admin") {
+                      return `
+                        <div class="flex justify-center">
+                          <div class="px-3.5 py-2.5 rounded-2xl bg-amberc/15 border border-amberc/50 text-xs text-amber-100 max-w-[94%] shadow-md">
+                            <div class="text-[10px] font-black uppercase tracking-wider text-amber-300 mb-0.5">⚖️ [Wayones Arbitrator] • ${timeAgo(msg.createdAt)}</div>
+                            <div class="leading-relaxed">${esc(msg.text)}</div>
+                          </div>
+                        </div>
+                      `;
+                    }
+                    const isBuyerMsg = msg.senderUid === t.buyerUid || msg.senderName === t.buyerName;
+                    return `
+                      <div class="flex flex-col ${isBuyerMsg ? "items-start" : "items-end"}">
+                        <div class="px-3.5 py-2 rounded-2xl text-xs max-w-[85%] leading-relaxed ${
+                          isBuyerMsg ? "bg-panel border border-borderc text-crisp rounded-bl-sm" : "bg-tealc/20 border border-tealc/40 text-crisp rounded-br-sm"
+                        }">${esc(msg.text)}</div>
+                        <span class="text-[10px] text-muted mt-1 px-1">${isBuyerMsg ? "Buyer" : "Seller"} (${esc(msg.senderName)}) • ${timeAgo(msg.createdAt)}</span>
+                      </div>
+                    `;
+                  }).join("")}
+                </div>
+
+                <form onsubmit="window.admin.sendArbChat(event, '${esc(t.id)}')" class="p-3 bg-panel border-t border-borderc space-y-2">
+                  <div class="text-[10px] font-extrabold uppercase tracking-wider text-amber-300">Send Official [Wayones Arbitrator] Message</div>
+                  <div class="flex items-center gap-2">
+                    <input id="arb-chat-inp" type="text" autocomplete="off" placeholder="Request UTR proof, warn counterparty, or post ruling..." class="flex-1 h-10 px-3.5 rounded-xl bg-obsidian border border-borderc focus:border-amberc focus:outline-none text-xs sm:text-sm text-crisp" />
+                    <button type="submit" class="h-10 px-4 rounded-xl bg-amberc hover:bg-amber-400 text-[#090F0D] font-extrabold text-xs shrink-0">Send</button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+        </div>
+      `);
+
+      setTimeout(() => {
+        const feed = document.getElementById("arb-chat-feed");
+        if (feed) feed.scrollTop = feed.scrollHeight;
+      }, 30);
+    }
+
+    /* =========================================================================
+       14. TAB 4: USERS & RISK CONTROL + MANAGEMENT DRAWER
+       ========================================================================= */
+    function renderUsersTab() {
+      const all = getAllUsers();
+      const q = (state.userSearch || "").trim().toLowerCase();
+      const filtered = all.filter(u =>
+        !q || [u.name, u.email, u.uid, u.kycStatus].some(v => String(v || "").toLowerCase().includes(q))
+      );
+
+      return `
+        <div class="space-y-5">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+              <h1 class="text-xl sm:text-2xl font-extrabold text-crisp">Users & Risk Control</h1>
+              <p class="text-xs sm:text-sm text-muted mt-0.5">Manage registered traders, adjust test balances, grant Merchant badges, or suspend risky accounts.</p>
+            </div>
+            <span class="px-3 py-1.5 rounded-xl bg-card border border-borderc text-xs font-extrabold text-mint self-start sm:self-auto">${all.length} Registered Accounts</span>
+          </div>
+
+          <div class="bg-card border border-borderc rounded-2xl p-3.5">
+            <input type="search" value="${esc(state.userSearch)}" oninput="window.admin.setUserSearch(this.value)" placeholder="Search users by Name, Verified Gmail, UID, or KYC status..." class="w-full h-11 px-4 rounded-xl bg-panel border border-borderc focus:border-mint focus:outline-none text-sm text-crisp placeholder-muted/70" />
+          </div>
+
+          ${!filtered.length ? `
+            <div class="bg-card border border-borderc rounded-3xl p-10 text-center space-y-2.5">
+              <div class="text-2xl">👥</div>
+              <div class="text-sm font-extrabold text-crisp">No Matching Users</div>
+              <p class="text-xs text-muted">Users who sign in via Google on <code class="text-mint">wayones-user.html</code> sync here automatically.</p>
+            </div>
+          ` : `
+            <div class="flex flex-col gap-3">
+              ${filtered.map(u => {
+                const usdtBal = Number(u.balances?.USDT || 0);
+                return `
+                  <div onclick="window.admin.openUserDrawer('${esc(u.uid)}')" class="cursor-pointer bg-card hover:bg-panel border ${u.suspended ? "border-coral/50" : "border-borderc hover:border-mint/45"} rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 transition-all">
+                    <div class="flex items-center gap-3 min-w-0">
+                      ${renderAvatar(u.photoURL, u.name, "w-11 h-11 text-sm")}
+                      <div class="min-w-0">
+                        <div class="flex items-center gap-1.5 flex-wrap">
+                          <span class="font-extrabold text-crisp text-sm truncate">${esc(u.name)}</span>
+                          ${kycBadgeHtml(u.kycStatus)}
+                          ${u.verifiedMerchant ? `<span class="px-2 py-0.5 rounded-full bg-tealc/20 border border-tealc/45 text-tealc text-[10px] font-extrabold">★ Merchant</span>` : ""}
+                          ${u.suspended ? `<span class="px-2 py-0.5 rounded-full bg-coral text-white text-[10px] font-extrabold uppercase">Suspended</span>` : `<span class="px-2 py-0.5 rounded-full bg-mint/10 text-mint text-[10px] font-bold">Active</span>`}
+                        </div>
+                        <div class="text-xs text-muted truncate mt-0.5">${esc(u.email)} • <span class="font-mono text-[11px]">${esc(u.uid.slice(0, 14))}</span></div>
+                      </div>
+                    </div>
+
+                    <div class="flex items-center justify-between sm:justify-end gap-4 pt-2 sm:pt-0 border-t sm:border-t-0 border-borderc shrink-0">
+                      <div class="sm:text-right">
+                        <div class="text-[10px] text-muted">USDT Wallet</div>
+                        <div class="text-sm font-extrabold text-crisp tabular-nums">${fmtCrypto(usdtBal, "USDT")} USDT</div>
+                      </div>
+                      <span class="h-9 px-3.5 rounded-xl bg-panel border border-borderc text-xs font-extrabold text-mint inline-flex items-center">Manage →</span>
+                    </div>
+                  </div>
+                `;
+              }).join("")}
+            </div>
+          `}
+        </div>
+      `;
+    }
+
+    function renderUserDrawer(uid) {
+      const u = getAllUsers().find(x => x.uid === uid);
+      if (!u) return;
+      state.inspectUserUid = uid;
+      const hasKyc = getAllKycRecords().some(k => k.uid === uid);
+      const userTrades = getAllTrades().filter(t => t.buyerUid === uid || t.sellerUid === uid);
+
+      openModal(`
+        <div class="fixed inset-0 z-50 flex justify-end bg-black/80 backdrop-blur-sm" onclick="window.admin.backdropClose(event)">
+          <div class="anim-in w-full sm:max-w-md h-full bg-card border-l border-borderc flex flex-col shadow-2xl overflow-hidden" onclick="event.stopPropagation()">
+            <div class="px-5 py-4 bg-panel border-b border-borderc flex items-center justify-between gap-2">
+              <div class="flex items-center gap-3 min-w-0">
+                ${renderAvatar(u.photoURL, u.name, "w-10 h-10 text-sm")}
+                <div class="min-w-0">
+                  <div class="font-extrabold text-crisp text-sm truncate">${esc(u.name)}</div>
+                  <div class="text-xs text-muted truncate">${esc(u.email)}</div>
+                </div>
+              </div>
+              <button type="button" onclick="window.admin.closeModal()" class="w-9 h-9 rounded-xl bg-obsidian text-muted flex items-center justify-center shrink-0">✕</button>
+            </div>
+
+            <div class="p-5 overflow-y-auto space-y-5 flex-1">
+              <!-- Status & UID -->
+              <div class="bg-obsidian border border-borderc rounded-2xl p-3.5 space-y-2 text-xs">
+                <div class="flex items-center justify-between gap-2">
+                  <span class="text-muted">UID</span>
+                  <button type="button" onclick="window.admin.copy('${esc(u.uid)}', 'UID Copied!')" class="font-mono text-mint hover:underline truncate max-w-[200px]">${esc(u.uid)} ❐</button>
+                </div>
+                <div class="flex items-center justify-between">
+                  <span class="text-muted">KYC Tier</span>
+                  ${kycBadgeHtml(u.kycStatus)}
+                </div>
+                <div class="flex items-center justify-between">
+                  <span class="text-muted">Account Status</span>
+                  <span class="font-extrabold ${u.suspended ? "text-red-400" : "text-mint"}">${u.suspended ? "Suspended" : "Active"}</span>
+                </div>
+              </div>
+
+              <!-- Quick Wallet Balance Adjustment -->
+              <div class="bg-panel border border-borderc rounded-2xl p-4 space-y-3">
+                <div class="text-xs font-extrabold uppercase tracking-wider text-mint">Wallet Balances & Test Credit</div>
+                <div class="grid grid-cols-2 gap-2">
+                  ${["USDT", "USDC", "BTC", "ETH"].map(sym => `
+                    <div class="bg-obsidian border border-borderc rounded-xl p-2.5 flex items-center gap-2">
+                      ${cryptoLogoSvg(sym, 22)}
+                      <div class="min-w-0">
+                        <div class="text-[10px] text-muted">${sym}</div>
+                        <div class="text-xs font-extrabold text-crisp tabular-nums truncate">${fmtCrypto(u.balances?.[sym] || 0, sym)}</div>
+                      </div>
+                    </div>
+                  `).join("")}
+                </div>
+
+                <div class="grid grid-cols-2 gap-2">
+                  <button type="button" onclick="window.admin.adjustBalance('${esc(u.uid)}', 'USDT', 500)" class="h-10 rounded-xl bg-mint/15 hover:bg-mint text-mint hover:text-[#051B12] border border-mint/40 font-extrabold text-xs transition-colors">+500 USDT</button>
+                  <button type="button" onclick="window.admin.adjustBalance('${esc(u.uid)}', 'USDT', -100)" class="h-10 rounded-xl bg-coral/15 hover:bg-coral text-red-200 hover:text-white border border-coral/40 font-extrabold text-xs transition-colors">-100 USDT</button>
+                </div>
+
+                <form onsubmit="window.admin.submitCustomBalance(event, '${esc(u.uid)}')" class="flex items-center gap-2 pt-1">
+                  <select id="bal-coin" class="h-10 px-2 rounded-xl bg-obsidian border border-borderc text-xs font-bold text-crisp">
+                    ${Object.keys(COINS).map(k => `<option value="${k}">${k}</option>`).join("")}
+                  </select>
+                  <input id="bal-delta" type="number" step="any" required placeholder="+ / - amt" class="flex-1 min-w-0 h-10 px-3 rounded-xl bg-obsidian border border-borderc text-xs font-bold text-crisp tabular-nums" />
+                  <button type="submit" class="h-10 px-3 rounded-xl bg-mint text-[#051B12] font-extrabold text-xs shrink-0">Apply</button>
+                </form>
+              </div>
+
+              <!-- Risk & Privileges -->
+              <div class="bg-panel border border-borderc rounded-2xl p-4 space-y-3">
+                <div class="text-xs font-extrabold uppercase tracking-wider text-muted">Privileges & Risk Controls</div>
+                <button type="button" onclick="window.admin.toggleMerchant('${esc(u.uid)}')" class="w-full h-11 px-4 rounded-xl border font-extrabold text-xs flex items-center justify-between transition-all ${
+                  u.verifiedMerchant ? "bg-tealc/20 border-tealc text-tealc" : "bg-obsidian border-borderc text-crisp hover:border-tealc/50"
+                }">
+                  <span>★ Verified Merchant Badge</span>
+                  <span>${u.verifiedMerchant ? "ENABLED" : "OFF"}</span>
+                </button>
+
+                <div class="space-y-2 pt-1">
+                  ${!u.suspended ? `<input id="suspend-reason-inp" type="text" placeholder="Suspension reason (optional)..." class="w-full h-10 px-3 rounded-xl bg-obsidian border border-borderc text-xs text-crisp" />` : ""}
+                  <button type="button" onclick="window.admin.toggleSuspend('${esc(u.uid)}')" class="w-full h-11 px-4 rounded-xl font-extrabold text-xs transition-all ${
+                    u.suspended ? "bg-mint text-[#051B12]" : "bg-coral/15 hover:bg-coral border border-coral/45 text-red-200 hover:text-white"
+                  }">
+                    ${u.suspended ? "✓ Reinstate Account" : "⛔ Suspend / Ban Account"}
+                  </button>
+                </div>
+              </div>
+
+              <!-- Quick Jumps -->
+              <div class="grid grid-cols-2 gap-2">
+                <button type="button" ${!hasKyc ? "disabled" : ""} onclick="window.admin.openKycInspect('${esc(u.uid)}')" class="h-10 rounded-xl bg-obsidian border border-borderc hover:border-mint/50 text-xs font-bold text-crisp ${!hasKyc ? "opacity-45 cursor-not-allowed" : ""}">View KYC Docs</button>
+                <button type="button" onclick="window.admin.closeModal();window.admin.setTab('disputes');window.admin.setDisputeFilter('all')" class="h-10 rounded-xl bg-obsidian border border-borderc hover:border-mint/50 text-xs font-bold text-crisp">Trades (${userTrades.length})</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      `);
+    }
+
+    /* =========================================================================
+       15. TAB 5: OFFERS MODERATION, IMMUTABLE AUDIT LOG & PLATFORM CONTROLS
+       ========================================================================= */
+    function renderControlsTab() {
+      const offers = getAllOffers();
+      const logs = getAllLogs();
+
+      return `
+        <div class="space-y-6">
+          <div>
+            <h1 class="text-xl sm:text-2xl font-extrabold text-crisp">Offers, Audit Log & Controls</h1>
+            <p class="text-xs sm:text-sm text-muted mt-0.5">Moderate marketplace ads, inspect immutable admin logs, and configure global platform rules.</p>
+          </div>
+
+          <!-- Platform Settings + Demo Mode -->
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+            <!-- Global Exchange Settings -->
+            <section class="bg-card border border-borderc rounded-3xl p-5 space-y-4">
+              <h2 class="text-base font-extrabold text-crisp">Platform Settings (<code class="text-xs text-mint">config/platform</code>)</h2>
+
+              <form onsubmit="window.admin.saveFeeConfig(event)" class="flex items-end gap-2.5">
+                <div class="flex-1">
+                  <label class="block text-xs font-semibold text-muted mb-1">Global Escrow Fee (%)</label>
+                  <input id="cfg-fee-inp" type="number" step="0.05" min="0" max="10" value="${esc(state.config.escrowFeePct)}" class="w-full h-11 px-3.5 rounded-xl bg-panel border border-borderc focus:border-mint focus:outline-none text-sm font-extrabold text-crisp tabular-nums" />
+                </div>
+                <button type="submit" class="h-11 px-4 rounded-xl bg-mint text-[#051B12] font-extrabold text-xs shadow-mint shrink-0">Save Fee</button>
+              </form>
+
+              <div class="flex items-center justify-between p-3.5 rounded-2xl bg-panel border border-borderc gap-3">
+                <div>
+                  <div class="text-xs font-extrabold text-crisp">Maintenance Mode</div>
+                  <div class="text-[11px] text-muted">Temporarily pause new P2P escrow creation</div>
+                </div>
+                <button type="button" onclick="window.admin.toggleMaintenance()" class="h-9 px-4 rounded-xl font-extrabold text-xs transition-all ${
+                  state.config.maintenanceMode ? "bg-coral text-white" : "bg-obsidian border border-borderc text-muted"
+                }">${state.config.maintenanceMode ? "ON" : "OFF"}</button>
+              </div>
+
+              <!-- Demo Preview Toggle -->
+              <div class="flex items-center justify-between p-3.5 rounded-2xl bg-amberc/10 border border-amberc/35 gap-3">
+                <div>
+                  <div class="text-xs font-extrabold text-amber-300">Demo Preview Cases ([SAMPLE])</div>
+                  <div class="text-[11px] text-muted">Strictly isolated — never writes to real Firebase users</div>
+                </div>
+                <button type="button" onclick="window.admin.toggleSampleCases()" class="h-9 px-3.5 rounded-xl font-extrabold text-xs shrink-0 ${
+                  state.sampleMode ? "bg-amberc text-[#090F0D]" : "bg-obsidian border border-amberc/45 text-amber-300"
+                }">${state.sampleMode ? "Clear Samples" : "Load Samples"}</button>
+              </div>
+            </section>
+
+            <!-- Security: Authorized Admin Emails & PIN -->
+            <section class="bg-card border border-borderc rounded-3xl p-5 space-y-4">
+              <h2 class="text-base font-extrabold text-crisp">Admin Access Security</h2>
+
+              <form onsubmit="window.admin.addAuthorizedEmail(event)" class="space-y-2">
+                <label class="block text-xs font-semibold text-muted">Authorized Admin Gmail Whitelist</label>
+                <div class="flex items-center gap-2">
+                  <input id="cfg-email-inp" type="email" required placeholder="owner@gmail.com" class="flex-1 h-11 px-3.5 rounded-xl bg-panel border border-borderc focus:border-mint focus:outline-none text-xs sm:text-sm text-crisp" />
+                  <button type="submit" class="h-11 px-4 rounded-xl bg-mint text-[#051B12] font-extrabold text-xs shrink-0">Add</button>
+                </div>
+              </form>
+
+              <div class="flex flex-wrap gap-1.5">
+                ${!state.config.authorizedEmails.length
+                  ? `<span class="text-[11px] text-muted">No Gmail restriction set yet (any Google login unlocks). Add your Gmail above to restrict access.</span>`
+                  : state.config.authorizedEmails.map(em => `
+                    <span class="px-2.5 py-1 rounded-lg bg-panel border border-mint/35 text-xs font-bold text-crisp inline-flex items-center gap-2">
+                      ${esc(em)}
+                      <button type="button" onclick="window.admin.removeAuthorizedEmail('${esc(em)}')" class="text-red-300 hover:text-white font-black">×</button>
+                    </span>
+                  `).join("")
+                }
+              </div>
+
+              <form onsubmit="window.admin.changeQuickPin(event)" class="pt-2 border-t border-borderc flex items-end gap-2">
+                <div class="flex-1">
+                  <label class="block text-xs font-semibold text-muted mb-1">Change Quick Admin PIN</label>
+                  <input id="cfg-pin-inp" type="password" inputmode="numeric" minlength="4" maxlength="10" required placeholder="New 4–10 digit PIN" class="w-full h-11 px-3.5 rounded-xl bg-panel border border-borderc focus:border-mint focus:outline-none font-mono text-sm text-crisp" />
+                </div>
+                <button type="submit" class="h-11 px-4 rounded-xl bg-panel hover:bg-borderc border border-borderc text-xs font-extrabold text-mint shrink-0">Update PIN</button>
+              </form>
+            </section>
+          </div>
+
+          <!-- P2P Marketplace Offers Moderation -->
+          <section class="bg-card border border-borderc rounded-3xl p-5 space-y-4">
+            <div class="flex items-center justify-between">
+              <h2 class="text-base font-extrabold text-crisp">P2P Marketplace Offers Moderation</h2>
+              <span class="text-xs font-bold text-muted">${offers.length} Active / Paused Ads</span>
+            </div>
+
+            ${!offers.length ? `
+              <div class="py-8 text-center text-xs text-muted bg-obsidian/60 rounded-2xl border border-borderc">
+                User-published offers from <code class="text-mint">wayones-user.html</code> appear here for moderation.
+              </div>
+            ` : `
+              <div class="flex flex-col gap-2.5">
+                ${offers.map(o => {
+                  const paused = o.isActive === false;
+                  return `
+                    <div class="bg-panel border ${paused ? "border-amberc/40 opacity-80" : "border-borderc"} rounded-2xl p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                      <div class="flex items-center gap-3 min-w-0">
+                        ${cryptoLogoSvg(o.crypto, 30)}
+                        <div class="min-w-0">
+                          <div class="flex items-center gap-2 flex-wrap">
+                            <span class="text-xs font-extrabold text-crisp">${esc(o.traderName)}</span>
+                            <span class="px-2 py-0.5 rounded text-[10px] font-extrabold ${o.side === "SELL" ? "bg-mint/15 text-mint" : "bg-coral/15 text-red-300"}">${esc(o.side)} ${esc(o.crypto)}</span>
+                            ${paused ? `<span class="px-2 py-0.5 rounded bg-amberc/20 text-amber-300 text-[10px] font-extrabold">PAUSED</span>` : `<span class="px-2 py-0.5 rounded bg-mint/10 text-mint text-[10px] font-bold">LIVE</span>`}
+                          </div>
+                          <div class="text-[11px] text-muted mt-0.5 tabular-nums">
+                            ${fmtFiat(o.price, o.fiat)} / ${o.crypto} • Limits: ${fmtFiat(o.minLimit, o.fiat)}–${fmtFiat(o.maxLimit, o.fiat)} • ${esc((o.paymentMethods || []).join(", "))}
+                          </div>
+                        </div>
+                      </div>
+                      <div class="flex items-center gap-2 shrink-0">
+                        <button type="button" onclick="window.admin.toggleOffer('${esc(o.id)}')" class="h-9 px-3 rounded-xl bg-obsidian border border-borderc hover:border-amberc/50 text-xs font-bold text-amber-300">${paused ? "Resume" : "Pause"}</button>
+                        <button type="button" onclick="window.admin.confirmDeleteOffer('${esc(o.id)}')" class="h-9 px-3 rounded-xl bg-coral/15 hover:bg-coral text-red-200 hover:text-white text-xs font-bold transition-colors">Delete</button>
+                      </div>
+                    </div>
+                  `;
+                }).join("")}
+              </div>
+            `}
+          </section>
+
+          <!-- Immutable Admin Audit Log -->
+          <section class="bg-card border border-borderc rounded-3xl p-5 space-y-4">
+            <div class="flex items-center justify-between">
+              <h2 class="text-base font-extrabold text-crisp">Immutable Admin Audit Log</h2>
+              <span class="text-xs font-bold text-muted">${logs.length} Recorded Events</span>
+            </div>
+
+            ${!logs.length ? `
+              <div class="py-8 text-center text-xs text-muted bg-obsidian/60 rounded-2xl border border-borderc">No audit events recorded yet.</div>
+            ` : `
+              <div class="divide-y divide-borderc max-h-96 overflow-y-auto pr-1">
+                ${logs.slice(0, 40).map(l => `
+                  <div class="py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
+                    <div class="min-w-0">
+                      <div class="flex items-center gap-2 flex-wrap">
+                        <span class="px-2 py-0.5 rounded bg-panel border border-borderc font-mono text-[10px] font-extrabold text-mint">${esc(l.action)}</span>
+                        <span class="font-bold text-crisp truncate">${esc(l.target)}</span>
+                      </div>
+                      <div class="text-muted mt-1 break-words">${esc(l.details)}</div>
+                    </div>
+                    <div class="sm:text-right shrink-0">
+                      <div class="text-[11px] font-semibold text-crisp/85">${esc(l.adminEmail)}</div>
+                      <div class="text-[10px] text-muted">${fmtDate(l.createdAt || l.serverAt)}</div>
+                    </div>
+                  </div>
+                `).join("")}
+              </div>
+            `}
+          </section>
+        </div>
+      `;
+    }
+
+    /* =========================================================================
+       16. FULLSCREEN LIGHTBOX (ZOOM + 90° ROTATE) & IN-APP CONFIRM DIALOG
+       ========================================================================= */
+    let lightboxMeta = {};
+    function openLightbox(title, src, meta = {}) {
+      lightboxMeta = meta || {};
+      state.lightbox = { open: true, title, src, zoomed: false, rotation: 0 };
+      renderLightbox();
+    }
+
+    function closeLightbox() {
+      state.lightbox.open = false;
+      const root = document.getElementById("lightbox-root");
+      if (root) root.innerHTML = "";
+    }
+
+    function renderLightbox() {
+      const root = document.getElementById("lightbox-root");
+      if (!root) return;
+      const lb = state.lightbox;
+      if (!lb.open) { root.innerHTML = ""; return; }
+
+      const scale = lb.zoomed ? 1.85 : 1;
+      const rot = lb.rotation || 0;
+
+      root.innerHTML = `
+        <div class="fixed inset-0 z-[120] bg-black/95 backdrop-blur-md flex flex-col">
+          <!-- Lightbox Toolbar -->
+          <div class="px-4 py-3 bg-card/95 border-b border-borderc flex items-center justify-between gap-2">
+            <div class="text-xs sm:text-sm font-extrabold text-crisp truncate">${esc(lb.title)}</div>
+            <div class="flex items-center gap-2 shrink-0">
+              <button type="button" onclick="window.admin.lightboxZoom()" class="h-9 px-3 rounded-xl bg-panel border border-borderc hover:border-mint text-xs font-bold text-crisp">
+                ${lb.zoomed ? "Zoom 1x" : "Zoom 1.8x 🔍"}
+              </button>
+              <button type="button" onclick="window.admin.lightboxRotate()" class="h-9 px-3 rounded-xl bg-panel border border-borderc hover:border-mint text-xs font-bold text-mint">
+                Rotate 90° ↻
+              </button>
+              <button type="button" onclick="window.admin.closeLightbox()" class="h-9 w-9 rounded-xl bg-coral text-white font-black text-sm flex items-center justify-center">✕</button>
+            </div>
+          </div>
+
+          <!-- Image Viewport -->
+          <div class="flex-1 overflow-auto flex items-center justify-center p-6" onclick="window.admin.closeLightbox()">
+            <div onclick="event.stopPropagation(); window.admin.lightboxZoom()" class="cursor-zoom-in transition-transform duration-200 ease-out flex items-center justify-center" style="transform: scale(${scale}) rotate(${rot}deg);">
+              ${renderDocumentVisual(lb.src, lb.title, lightboxMeta, true)}
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function openConfirm({ title, message, confirmLabel = "Confirm", confirmTone = "mint", onConfirm }) {
+      state.confirmDialog = { title, message, confirmLabel, confirmTone, onConfirm };
+      const root = document.getElementById("confirm-root");
+      if (!root) return;
+      const btnCls = confirmTone === "coral"
+        ? "bg-coral hover:bg-red-500 text-white"
+        : "bg-mint hover:bg-mint-hover text-[#051B12] shadow-mint";
+
+      root.innerHTML = `
+        <div class="fixed inset-0 z-[140] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm" onclick="window.admin.closeConfirm()">
+          <div class="anim-in w-full max-w-sm bg-card border border-borderc rounded-3xl p-5 space-y-4 shadow-2xl" onclick="event.stopPropagation()">
+            <h3 class="text-base font-extrabold text-crisp">${esc(title)}</h3>
+            <p class="text-xs sm:text-sm text-muted leading-relaxed">${esc(message)}</p>
+            <div class="flex items-center gap-2 pt-1">
+              <button type="button" onclick="window.admin.closeConfirm()" class="flex-1 h-11 rounded-xl bg-panel border border-borderc text-xs font-bold text-crisp">Cancel</button>
+              <button type="button" onclick="window.admin.runConfirm()" class="flex-1 h-11 rounded-xl font-extrabold text-xs transition-all ${btnCls}">${esc(confirmLabel)}</button>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function closeConfirm() {
+      state.confirmDialog = null;
+      const root = document.getElementById("confirm-root");
+      if (root) root.innerHTML = "";
+    }
+
+    /* =========================================================================
+       17. MAIN SHELL RENDERER (RESPONSIVE SIDEBAR + MOBILE BOTTOM NAV)
+       ========================================================================= */
+    function renderConsoleShell() {
+      const pendingKycCount = getAllKycRecords().filter(k => k.status === "pending").length;
+      const openDisputeCount = getAllTrades().filter(t => t.status === "disputed").length;
+
+      const navItems = [
+        { id: "overview", label: "Overview", icon: `<path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>` },
+        { id: "kyc", label: "KYC Desk", badge: pendingKycCount, badgeCls: "bg-amberc text-[#090F0D]", icon: `<path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>` },
+        { id: "disputes", label: "Disputes", badge: openDisputeCount, badgeCls: "bg-coral text-white", icon: `<path stroke-linecap="round" stroke-linejoin="round" d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3"/>` },
+        { id: "users", label: "Users", icon: `<path stroke-linecap="round" stroke-linejoin="round" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>` },
+        { id: "controls", label: "Controls", icon: `<path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>` }
+      ];
+
+      let contentHtml = "";
+      if (state.tab === "overview") contentHtml = renderOverviewTab();
+      else if (state.tab === "kyc") contentHtml = renderKycDeskTab();
+      else if (state.tab === "disputes") contentHtml = renderDisputesTab();
+      else if (state.tab === "users") contentHtml = renderUsersTab();
+      else contentHtml = renderControlsTab();
+
+      const sideW = state.sidebarCollapsed ? "lg:w-20" : "lg:w-64";
+
+      return `
+        <div class="min-h-screen flex flex-col lg:flex-row">
+          <!-- Desktop Collapsible Sidebar -->
+          <aside class="hidden lg:flex flex-col ${sideW} shrink-0 bg-card border-r border-borderc sticky top-0 h-screen transition-all duration-200 z-30">
+            <div class="h-16 px-4 border-b border-borderc flex items-center justify-between gap-2">
+              <div class="flex items-center gap-2.5 min-w-0">
+                <div class="w-9 h-9 rounded-xl brand-grad flex items-center justify-center shadow-mint shrink-0">
+                  ${wayonesMonogramSvg(19)}
+                </div>
+                ${!state.sidebarCollapsed ? `
+                  <div class="min-w-0">
+                    <div class="text-base font-black tracking-tight text-crisp leading-none">Way<span class="text-mint">ones</span></div>
+                    <span class="inline-block mt-1 px-1.5 py-0.5 rounded bg-amberc/18 border border-amberc/40 text-amber-300 text-[9px] font-extrabold uppercase tracking-wider">Admin Console</span>
+                  </div>
+                ` : ""}
+              </div>
+              <button type="button" onclick="window.admin.toggleSidebar()" title="Toggle Sidebar" class="w-7 h-7 rounded-lg bg-panel hover:bg-borderc text-muted flex items-center justify-center text-xs shrink-0">
+                ${state.sidebarCollapsed ? "»" : "«"}
+              </button>
+            </div>
+
+            <nav class="flex-1 p-3 space-y-1.5">
+              ${navItems.map(item => {
+                const active = state.tab === item.id;
+                return `
+                  <button type="button" onclick="window.admin.setTab('${item.id}')" class="w-full h-11 px-3 rounded-xl flex items-center ${state.sidebarCollapsed ? "justify-center" : "justify-between"} gap-2.5 text-xs font-extrabold transition-all ${
+                    active ? "bg-mint text-[#051B12] shadow-mint" : "text-muted hover:text-crisp hover:bg-panel"
+                  }">
+                    <span class="flex items-center gap-2.5">
+                      <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">${item.icon}</svg>
+                      ${!state.sidebarCollapsed ? `<span>${item.label}</span>` : ""}
+                    </span>
+                    ${!state.sidebarCollapsed && item.badge ? `<span class="px-1.5 py-0.5 rounded-full text-[10px] font-black leading-none ${active ? "bg-[#051B12]/20 text-[#051B12]" : item.badgeCls}">${item.badge}</span>` : ""}
+                  </button>
+                `;
+              }).join("")}
+            </nav>
+
+            <div class="p-3 border-t border-borderc">
+              <button type="button" onclick="window.admin.lock()" class="w-full h-10 px-3 rounded-xl bg-coral/15 hover:bg-coral border border-coral/40 text-red-200 hover:text-white font-extrabold text-xs flex items-center justify-center gap-2 transition-colors">
+                <span>🔒</span>
+                ${!state.sidebarCollapsed ? `<span>Lock / Sign Out</span>` : ""}
+              </button>
+            </div>
+          </aside>
+
+          <!-- Main Area (Top Header + Viewport) -->
+          <div class="flex-1 flex flex-col min-w-0">
+            <header class="sticky top-0 z-30 h-16 bg-obsidian/92 backdrop-blur-xl border-b border-borderc px-3.5 sm:px-6 flex items-center justify-between gap-2">
+              <!-- Mobile Brand -->
+              <div class="flex items-center gap-2 lg:hidden">
+                <div class="w-8 h-8 rounded-xl brand-grad flex items-center justify-center shadow-mint">
+                  ${wayonesMonogramSvg(17)}
+                </div>
+                <div class="flex items-center gap-1.5">
+                  <span class="text-base font-black text-crisp">Way<span class="text-mint">ones</span></span>
+                  <span class="px-1.5 py-0.5 rounded bg-amberc/18 border border-amberc/40 text-amber-300 text-[9px] font-extrabold uppercase">Admin</span>
+                </div>
+              </div>
+
+              <!-- Desktop Admin Identity -->
+              <div class="hidden lg:flex items-center gap-2.5 text-xs">
+                <span class="text-muted">Operator:</span>
+                <span class="font-extrabold text-crisp">${esc(state.adminUser?.email || "Admin")}</span>
+                <span class="px-2 py-0.5 rounded-md bg-panel border border-borderc text-[10px] font-bold text-mint uppercase">${esc(state.authMethod || "auth")}</span>
+              </div>
+
+              <!-- Right Header Controls -->
+              <div class="flex items-center gap-2">
+                ${renderConnectionPill(true)}
+                <button type="button" onclick="window.admin.lock()" class="h-8 px-2.5 sm:px-3 rounded-xl bg-coral/15 hover:bg-coral border border-coral/40 text-red-200 hover:text-white text-[11px] font-extrabold transition-colors">
+                  Lock
+                </button>
+              </div>
+            </header>
+
+            <main class="flex-1 max-w-6xl w-full mx-auto px-3.5 sm:px-6 pt-5 pb-24 lg:pb-10">
+              ${contentHtml}
+            </main>
+          </div>
+
+          <!-- Mobile Fixed Bottom Navigation (5 Tabs) -->
+          <nav class="lg:hidden fixed bottom-0 left-0 right-0 z-30 bg-card/95 backdrop-blur-xl border-t border-borderc pb-[env(safe-area-inset-bottom)]">
+            <div class="grid grid-cols-5 h-16">
+              ${navItems.map(item => {
+                const active = state.tab === item.id;
+                return `
+                  <button type="button" onclick="window.admin.setTab('${item.id}')" class="flex flex-col items-center justify-center gap-1 text-[10px] font-bold transition-colors ${active ? "text-mint" : "text-muted"}">
+                    <div class="relative">
+                      <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">${item.icon}</svg>
+                      ${item.badge ? `<span class="absolute -top-1.5 -right-2.5 min-w-[16px] h-4 px-1 text-[9px] font-black rounded-full flex items-center justify-center ${item.badgeCls}">${item.badge}</span>` : ""}
+                    </div>
+                    <span>${item.label}</span>
+                  </button>
+                `;
+              }).join("")}
+            </div>
+          </nav>
+        </div>
+      `;
+    }
+
+    /* =========================================================================
+       18. MODAL HELPERS, RENDER DISPATCH & PUBLIC BRIDGE
+       ========================================================================= */
+    function openModal(html) {
+      const root = document.getElementById("modal-root");
+      if (root) root.innerHTML = html;
+      document.body.style.overflow = "hidden";
+    }
+
+    function closeModal() {
+      const root = document.getElementById("modal-root");
+      if (root) root.innerHTML = "";
+      state.inspectKycUid = null;
+      state.inspectTradeId = null;
+      state.inspectUserUid = null;
+      document.body.style.overflow = "";
+    }
+
+    function renderApp() {
+      const shell = document.getElementById("console-shell");
+      if (!shell) return;
+      shell.innerHTML = state.unlocked ? renderConsoleShell() : renderLockScreen();
+    }
+
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") {
+        if (state.confirmDialog) closeConfirm();
+        else if (state.lightbox.open) closeLightbox();
+        else if (document.getElementById("modal-root")?.innerHTML.trim()) closeModal();
+      }
+    });
+
+    window.admin = {
+      googleSignIn: handleGoogleAdminSignIn,
+      setPinDraft(v) { state.pinInput = v; },
+      unlockPin: unlockWithPin,
+      lock: lockConsole,
+      toggleSidebar() { state.sidebarCollapsed = !state.sidebarCollapsed; renderApp(); },
+      toggleConnTooltip() { state.showConnTooltip = !state.showConnTooltip; renderApp(); },
+      setTab(tab) { state.tab = tab; state.showConnTooltip = false; renderApp(); window.scrollTo({ top: 0, behavior: "smooth" }); },
+
+      // Sample toggle
+      loadSampleCases,
+      toggleSampleCases() { if (state.sampleMode) clearSampleCases(); else loadSampleCases(); },
+
+      // KYC Desk
+      setKycFilter(f) { state.kycFilter = f; renderApp(); },
+      setKycSearch(v) { state.kycSearch = v; renderApp(); },
+      openKycInspect: openKycInspectModal,
+      setRejectDraft(v) { state.kycRejectReasonDraft = v; },
+      fillRejectReason(txt) {
+        state.kycRejectReasonDraft = txt;
+        const el = document.getElementById("kyc-reject-reason");
+        if (el) el.value = txt;
+      },
+      approveKyc,
+      rejectKyc,
+      confirmApproveKyc(uid) {
+        const k = getAllKycRecords().find(x => x.uid === uid);
+        openConfirm({
+          title: "Approve National ID?",
+          message: `Mark ${k?.fullName || uid} as Verified Trader immediately? This syncs live to their Wayones account.`,
+          confirmLabel: "Approve ✓",
+          confirmTone: "mint",
+          onConfirm: () => approveKyc(uid)
+        });
+      },
+
+      // Disputes & Arbitration
+      setDisputeFilter(f) { state.disputeFilter = f; renderApp(); },
+      openTradeInspect: renderTradeInspectModal,
+      sendArbChat: sendArbitratorMessage,
+      executeVerdict: executeDisputeVerdict,
+      confirmVerdict(tradeId, verdict) {
+        const isRelease = verdict === "release_buyer";
+        openConfirm({
+          title: isRelease ? "Release Crypto to Buyer?" : "Refund Crypto to Seller?",
+          message: isRelease
+            ? `This binding ruling completes trade ${tradeId} and credits escrowed crypto to the Buyer.`
+            : `This binding ruling cancels trade ${tradeId} and returns escrowed crypto to the Seller.`,
+          confirmLabel: isRelease ? "Release to Buyer" : "Refund Seller",
+          confirmTone: isRelease ? "mint" : "coral",
+          onConfirm: () => executeDisputeVerdict(tradeId, verdict)
+        });
+      },
+
+      // Users & Risk Control
+      setUserSearch(v) { state.userSearch = v; renderApp(); },
+      openUserDrawer: renderUserDrawer,
+      adjustBalance: adjustUserBalance,
+      submitCustomBalance(e, uid) {
+        e.preventDefault();
+        const coin = document.getElementById("bal-coin")?.value || "USDT";
+        const delta = parseFloat(document.getElementById("bal-delta")?.value);
+        if (isNaN(delta) || delta === 0) { toast("Enter a non-zero number.", "warning"); return; }
+        adjustUserBalance(uid, coin, delta);
+      },
+      toggleMerchant(uid) { toggleUserFlag(uid, "verifiedMerchant"); },
+      toggleSuspend(uid) {
+        const u = getAllUsers().find(x => x.uid === uid);
+        const reason = document.getElementById("suspend-reason-inp")?.value?.trim() || "Compliance & Risk Review";
+        openConfirm({
+          title: u?.suspended ? "Reinstate User Account?" : "Suspend User Account?",
+          message: u?.suspended
+            ? `Restore full trading access for ${u.name}?`
+            : `Block trading and flag ${u?.name} as Suspended? Reason: ${reason}`,
+          confirmLabel: u?.suspended ? "Reinstate" : "Suspend Account",
+          confirmTone: u?.suspended ? "mint" : "coral",
+          onConfirm: () => toggleUserFlag(uid, "suspended", reason)
+        });
+      },
+
+      // Offers & Platform Settings
+      toggleOffer: toggleOfferActive,
+      confirmDeleteOffer(offerId) {
+        openConfirm({
+          title: "Delete Marketplace Ad?",
+          message: `Permanently remove offer ${offerId} from Wayones P2P Marketplace?`,
+          confirmLabel: "Delete Ad",
+          confirmTone: "coral",
+          onConfirm: () => deleteOffer(offerId)
+        });
+      },
+      saveFeeConfig(e) {
+        e.preventDefault();
+        const fee = parseFloat(document.getElementById("cfg-fee-inp")?.value);
+        if (isNaN(fee) || fee < 0 || fee > 10) { toast("Fee must be between 0% and 10%.", "error"); return; }
+        savePlatformConfig({ escrowFeePct: Number(fee.toFixed(2)) }, `Global Escrow Fee updated to ${fee}%`);
+      },
+      toggleMaintenance() {
+        const next = !state.config.maintenanceMode;
+        savePlatformConfig({ maintenanceMode: next }, `Maintenance Mode turned ${next ? "ON" : "OFF"}`);
+      },
+      addAuthorizedEmail(e) {
+        e.preventDefault();
+        const inp = document.getElementById("cfg-email-inp");
+        const email = (inp?.value || "").trim().toLowerCase();
+        if (!email || !email.includes("@")) return;
+        const list = Array.from(new Set([...(state.config.authorizedEmails || []), email]));
+        savePlatformConfig({ authorizedEmails: list }, `Added ${email} to Admin Whitelist`);
+      },
+      removeAuthorizedEmail(email) {
+        const list = (state.config.authorizedEmails || []).filter(x => x !== email);
+        savePlatformConfig({ authorizedEmails: list }, `Removed ${email} from Whitelist`);
+      },
+      changeQuickPin(e) {
+        e.preventDefault();
+        const inp = document.getElementById("cfg-pin-inp");
+        const pin = (inp?.value || "").trim();
+        if (pin.length < 4) { toast("PIN must be at least 4 digits.", "warning"); return; }
+        savePlatformConfig({ quickPin: pin }, "Quick Admin Passkey PIN updated!");
+      },
+
+      // Lightbox, Confirm, Modal & Copy
+      openLightbox,
+      closeLightbox,
+      lightboxZoom() { state.lightbox.zoomed = !state.lightbox.zoomed; renderLightbox(); },
+      lightboxRotate() { state.lightbox.rotation = ((state.lightbox.rotation || 0) + 90) % 360; renderLightbox(); },
+      closeConfirm,
+      runConfirm() {
+        const fn = state.confirmDialog?.onConfirm;
+        closeConfirm();
+        if (typeof fn === "function") fn();
+      },
+      closeModal,
+      backdropClose(e) { if (e.target === e.currentTarget) closeModal(); },
+      copy: copyText
+    };
+
+    /* =========================================================================
+       19. BOOTSTRAP
+       ========================================================================= */
+    async function init() {
+      loadAdminSettingsAndLogs();
+      loadSharedMirror();
+
+      // Cross-tab BroadcastChannel + localStorage live sync with wayones-user.html
+      try {
+        if ("BroadcastChannel" in window) {
+          bc = new BroadcastChannel(BROADCAST_NAME);
+          bc.onmessage = (ev) => {
+            if (ev?.data?.type === "DB_UPDATED") {
+              loadSharedMirror();
+              renderApp();
+            }
+          };
+        }
+      } catch {}
+
+      window.addEventListener("storage", (ev) => {
+        if (ev.key === SHARED_LS_KEY) {
+          loadSharedMirror();
+          renderApp();
+        }
+      });
+
+      // Handle Google Auth redirect/session state
+      if (auth) {
+        try {
+          const redir = await getRedirectResult(auth);
+          if (redir?.user) completeGoogleUnlock(redir.user);
+        } catch (err) {
+          console.warn("Admin redirect auth notice:", err?.code || err?.message);
+        }
+
+        onAuthStateChanged(auth, (fbUser) => {
+          if (fbUser && !state.unlocked && isEmailAuthorized(fbUser.email)) {
+            completeGoogleUnlock(fbUser);
+          }
+        });
+      }
+
+      attachFirestoreListeners();
+      renderApp();
+    }
+
+    init();
+  </script>
