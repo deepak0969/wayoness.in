@@ -1,0 +1,3028 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Wayones — Global P2P Cryptocurrency Exchange</title>
+
+  <!-- Inter Font -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
+          },
+          colors: {
+            obsidian: '#090F0D',
+            card: '#101A17',
+            panel: '#15231E',
+            borderc: '#1E332B',
+            mint: {
+              DEFAULT: '#00D084',
+              hover: '#00E694',
+              soft: 'rgba(0, 208, 132, 0.14)',
+            },
+            tealc: '#14B8A6',
+            coral: '#EF4444',
+            amberc: '#F59E0B',
+            crisp: '#F4FBF8',
+            muted: '#8BA89C',
+          },
+          boxShadow: {
+            mint: '0 8px 26px -6px rgba(0, 208, 132, 0.42)',
+            card: '0 10px 30px -12px rgba(0, 0, 0, 0.55)',
+          }
+        }
+      }
+    };
+  </script>
+
+  <style>
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    html, body {
+      background-color: #090F0D;
+      color: #F4FBF8;
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      overflow-x: hidden;
+      min-height: 100vh;
+    }
+    .tabular-nums { font-variant-numeric: tabular-nums; }
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #090F0D; }
+    ::-webkit-scrollbar-thumb { background: #1E332B; border-radius: 9999px; }
+    ::-webkit-scrollbar-thumb:hover { background: #00D084; }
+    input[type="number"]::-webkit-inner-spin-button,
+    input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+    input[type="number"] { -moz-appearance: textfield; }
+
+    .hero-glow {
+      background:
+        radial-gradient(circle at 88% 12%, rgba(0, 208, 132, 0.22), transparent 52%),
+        radial-gradient(circle at 10% 92%, rgba(20, 184, 166, 0.14), transparent 48%),
+        linear-gradient(155deg, #101E19 0%, #0A1310 100%);
+    }
+    .brand-grad {
+      background: linear-gradient(135deg, #00E694 0%, #00D084 52%, #14B8A6 100%);
+    }
+    @keyframes fadeSlideUp {
+      from { opacity: 0; transform: translateY(12px) scale(0.985); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    .anim-in { animation: fadeSlideUp 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+  </style>
+</head>
+
+<body class="bg-obsidian text-crisp antialiased selection:bg-mint/30 selection:text-white">
+
+  <!-- ==================== TOAST NOTIFICATION HOST ==================== -->
+  <div id="toast-host" class="fixed top-4 right-4 left-4 sm:left-auto sm:w-96 z-[200] flex flex-col gap-2 pointer-events-none"></div>
+
+  <!-- ==================== STICKY TOP HEADER ==================== -->
+  <header class="sticky top-0 z-40 h-16 bg-obsidian/92 backdrop-blur-xl border-b border-borderc">
+    <div class="max-w-7xl mx-auto h-full px-3.5 sm:px-6 flex items-center justify-between gap-2">
+      <!-- Brand Logo: Emerald-to-Teal Rounded Square with Bold Lowercase 'w' + Wordmark + Live Pulse Dot -->
+      <button type="button" onclick="window.wayones.setTab('market')" class="flex items-center gap-2.5 focus:outline-none group shrink-0 select-none" aria-label="Wayones Home">
+        <div class="relative w-9 h-9 rounded-xl brand-grad flex items-center justify-center shadow-mint group-hover:brightness-110 transition-all">
+          <svg width="21" height="21" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <path d="M4.5 9.2L8.4 19.6C8.8 20.6 10.2 20.6 10.6 19.6L13.5 12.6C13.7 12.1 14.3 12.1 14.5 12.6L17.4 19.6C17.8 20.6 19.2 20.6 19.6 19.6L23.5 9.2" stroke="#051B12" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <span class="absolute -top-0.5 -right-0.5 flex h-2.5 w-2.5">
+            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-mint opacity-75"></span>
+            <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-mint border-2 border-obsidian"></span>
+          </span>
+        </div>
+        <div class="flex items-center gap-1.5">
+          <span class="text-lg sm:text-xl font-extrabold tracking-tight text-crisp">Way<span class="text-mint">ones</span></span>
+          <span class="hidden sm:inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-mint/12 border border-mint/30 text-[10px] font-bold text-mint uppercase tracking-wider">P2P</span>
+        </div>
+      </button>
+
+      <!-- Desktop Primary Navigation (5 Tabs) -->
+      <nav class="hidden lg:flex items-center gap-1 bg-card p-1 rounded-2xl border border-borderc">
+        <button data-tab="market" onclick="window.wayones.setTab('market')" class="desk-nav px-4 py-2 rounded-xl text-xs font-bold transition-all">P2P Market</button>
+        <button data-tab="trades" onclick="window.wayones.setTab('trades')" class="desk-nav px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5">
+          <span>Trades</span>
+          <span id="desk-trades-badge" class="hidden px-1.5 py-0.5 text-[10px] font-extrabold rounded-full bg-mint text-[#051B12] leading-none">0</span>
+        </button>
+        <button data-tab="kyc" onclick="window.wayones.setTab('kyc')" class="desk-nav px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5">
+          <span>Verify ID</span>
+          <span id="desk-kyc-dot" class="w-2 h-2 rounded-full bg-muted"></span>
+        </button>
+        <button data-tab="wallet" onclick="window.wayones.setTab('wallet')" class="desk-nav px-4 py-2 rounded-xl text-xs font-bold transition-all">Wallet</button>
+        <button data-tab="profile" onclick="window.wayones.setTab('profile')" class="desk-nav px-4 py-2 rounded-xl text-xs font-bold transition-all">Profile</button>
+      </nav>
+
+      <!-- Right Controls: Country Currency Selector + Auth / User Pill -->
+      <div class="flex items-center gap-2 shrink-0">
+        <button type="button" onclick="window.wayones.openCurrencyModal('global')" class="h-10 px-2.5 sm:px-3 rounded-xl bg-card hover:bg-panel border border-borderc hover:border-mint/50 flex items-center gap-2 transition-colors">
+          <span id="hdr-fiat-flag" class="flex items-center"></span>
+          <span id="hdr-fiat-code" class="text-xs font-extrabold text-crisp">INR</span>
+          <span id="hdr-fiat-name" class="hidden xl:inline text-[11px] font-medium text-muted">Indian Rupee</span>
+          <svg class="w-3.5 h-3.5 text-muted" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+        </button>
+
+        <button id="hdr-auth-btn" type="button" onclick="window.wayones.handleHeaderAuth()" class="h-10 px-3 sm:px-3.5 rounded-xl bg-mint hover:bg-mint-hover text-[#051B12] font-extrabold text-xs flex items-center gap-2 transition-all shadow-mint">
+          <span id="hdr-auth-avatar" class="hidden"></span>
+          <span id="hdr-auth-label" class="max-w-[110px] truncate">Sign In</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ==================== MAIN VIEWPORT ==================== -->
+  <main id="app-root" class="max-w-7xl mx-auto px-3.5 sm:px-6 pt-5 pb-28 lg:pb-12 min-h-[calc(100vh-4rem)]">
+    <div class="flex flex-col items-center justify-center py-24 text-center">
+      <div class="w-10 h-10 rounded-2xl border-2 border-mint border-t-transparent animate-spin mb-3"></div>
+      <div class="text-sm font-bold text-crisp">Loading Wayones P2P Exchange...</div>
+    </div>
+  </main>
+
+  <!-- ==================== MOBILE FIXED BOTTOM NAVIGATION (5 TABS) ==================== -->
+  <nav class="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-card/95 backdrop-blur-xl border-t border-borderc pb-[env(safe-area-inset-bottom)]">
+    <div class="grid grid-cols-5 h-16">
+      <button data-tab="market" onclick="window.wayones.setTab('market')" class="mob-nav flex flex-col items-center justify-center gap-1 text-[10px] font-bold transition-colors">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
+        <span>Market</span>
+      </button>
+
+      <button data-tab="trades" onclick="window.wayones.setTab('trades')" class="mob-nav flex flex-col items-center justify-center gap-1 text-[10px] font-bold transition-colors">
+        <div class="relative">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/></svg>
+          <span id="mob-trades-badge" class="hidden absolute -top-1.5 -right-2.5 min-w-[16px] h-4 px-1 text-[9px] font-extrabold rounded-full bg-mint text-[#051B12] flex items-center justify-center">0</span>
+        </div>
+        <span>Trades</span>
+      </button>
+
+      <button data-tab="kyc" onclick="window.wayones.setTab('kyc')" class="mob-nav flex flex-col items-center justify-center gap-1 text-[10px] font-bold transition-colors">
+        <div class="relative">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+          <span id="mob-kyc-dot" class="w-2 h-2 rounded-full bg-muted absolute -top-0.5 -right-1"></span>
+        </div>
+        <span>Verify ID</span>
+      </button>
+
+      <button data-tab="wallet" onclick="window.wayones.setTab('wallet')" class="mob-nav flex flex-col items-center justify-center gap-1 text-[10px] font-bold transition-colors">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 12V7H5a2 2 0 010-4h14v4M3 5v14a2 2 0 002 2h16v-5M18 12a2 2 0 000 4h4v-4h-4z"/></svg>
+        <span>Wallet</span>
+      </button>
+
+      <button data-tab="profile" onclick="window.wayones.setTab('profile')" class="mob-nav flex flex-col items-center justify-center gap-1 text-[10px] font-bold transition-colors">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+        <span>Profile</span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- ==================== MODAL ROOT ==================== -->
+  <div id="modal-root"></div>
+
+  <!-- ==================== WAYONES PUBLIC APPLICATION (FIREBASE v11.0.2) ==================== -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
+    import {
+      getAuth,
+      GoogleAuthProvider,
+      signInWithPopup,
+      signInWithRedirect,
+      getRedirectResult,
+      onAuthStateChanged,
+      signOut
+    } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
+    import {
+      getFirestore,
+      doc,
+      setDoc,
+      getDoc,
+      updateDoc,
+      collection,
+      onSnapshot,
+      serverTimestamp
+    } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
+
+    /* =========================================================================
+       1. FIREBASE INITIALIZATION (EXACT USER CONFIG)
+       ========================================================================= */
+    const firebaseConfig = {
+      apiKey: "AIzaSyD6Tk4XvqtQnRxu6F9qV2oeZpBt_Nskh9Y",
+      authDomain: "wayones-595fb.firebaseapp.com",
+      projectId: "wayones-595fb",
+      storageBucket: "wayones-595fb.firebasestorage.app",
+      messagingSenderId: "899914086607",
+      appId: "1:899914086607:web:8ddacb6f556c274ab15fba"
+    };
+
+    let firebaseApp = null;
+    let auth = null;
+    let db = null;
+    let googleProvider = null;
+
+    try {
+      firebaseApp = initializeApp(firebaseConfig);
+      auth = getAuth(firebaseApp);
+      db = getFirestore(firebaseApp);
+      googleProvider = new GoogleAuthProvider();
+      googleProvider.setCustomParameters({ prompt: "select_account" });
+    } catch (err) {
+      console.warn("Firebase initialization fallback:", err);
+    }
+
+    const SHARED_LS_KEY = "wayones_shared_db_v2";
+    const WALLET_LS_KEY = "wayones_local_wallet_v2";
+    const BROADCAST_NAME = "wayones_live_sync_v1";
+
+    /* =========================================================================
+       2. CRYPTOCURRENCIES (8), COUNTRY CURRENCIES (12) & KYC COUNTRIES
+       ========================================================================= */
+    const COINS = {
+      USDT: { symbol: "USDT", name: "Tether USD", priceUSD: 1.00, decimals: 2, defaultNet: "BEP-20" },
+      USDC: { symbol: "USDC", name: "USD Coin", priceUSD: 1.00, decimals: 2, defaultNet: "POLYGON" },
+      BTC:  { symbol: "BTC",  name: "Bitcoin", priceUSD: 94850.00, decimals: 6, defaultNet: "BEP-20" },
+      ETH:  { symbol: "ETH",  name: "Ethereum", priceUSD: 3220.00, decimals: 5, defaultNet: "ERC-20" },
+      BNB:  { symbol: "BNB",  name: "BNB Smart Chain", priceUSD: 642.00, decimals: 4, defaultNet: "BEP-20" },
+      SOL:  { symbol: "SOL",  name: "Solana", priceUSD: 218.00, decimals: 4, defaultNet: "SOL" },
+      TRX:  { symbol: "TRX",  name: "TRON", priceUSD: 0.245, decimals: 2, defaultNet: "TRC-20" },
+      TON:  { symbol: "TON",  name: "Toncoin", priceUSD: 5.65, decimals: 3, defaultNet: "TON" },
+    };
+
+    const FIATS = {
+      INR: { code: "INR", symbol: "₹", name: "Indian Rupee", country: "India", rateUSD: 86.30, locale: "en-IN", methods: ["UPI", "IMPS", "PhonePe", "Google Pay", "Paytm"] },
+      USD: { code: "USD", symbol: "$", name: "US Dollar", country: "United States", rateUSD: 1.00, locale: "en-US", methods: ["Zelle", "Cash App", "Venmo", "Wire"] },
+      EUR: { code: "EUR", symbol: "€", name: "Euro", country: "European Union", rateUSD: 0.92, locale: "de-DE", methods: ["SEPA Instant", "Revolut", "Wise"] },
+      AED: { code: "AED", symbol: "د.إ", name: "UAE Dirham", country: "United Arab Emirates", rateUSD: 3.67, locale: "en-AE", methods: ["Emirates NBD", "Bank Transfer"] },
+      NGN: { code: "NGN", symbol: "₦", name: "Nigerian Naira", country: "Nigeria", rateUSD: 1585.00, locale: "en-NG", methods: ["Bank Transfer", "OPay", "PalmPay"] },
+      BRL: { code: "BRL", symbol: "R$", name: "Brazilian Real", country: "Brazil", rateUSD: 5.76, locale: "pt-BR", methods: ["PIX", "Nubank"] },
+      GBP: { code: "GBP", symbol: "£", name: "British Pound", country: "United Kingdom", rateUSD: 0.79, locale: "en-GB", methods: ["Faster Payments", "Monzo"] },
+      PKR: { code: "PKR", symbol: "₨", name: "Pakistani Rupee", country: "Pakistan", rateUSD: 278.50, locale: "en-PK", methods: ["JazzCash", "EasyPaisa", "Raast"] },
+      TRY: { code: "TRY", symbol: "₺", name: "Turkish Lira", country: "Turkey", rateUSD: 34.80, locale: "tr-TR", methods: ["Papara", "FAST"] },
+      PHP: { code: "PHP", symbol: "₱", name: "Philippine Peso", country: "Philippines", rateUSD: 58.60, locale: "en-PH", methods: ["GCash", "Maya"] },
+      VND: { code: "VND", symbol: "₫", name: "Vietnamese Dong", country: "Vietnam", rateUSD: 25420.00, locale: "vi-VN", methods: ["VietQR", "MoMo"] },
+      IDR: { code: "IDR", symbol: "Rp", name: "Indonesian Rupiah", country: "Indonesia", rateUSD: 15920.00, locale: "id-ID", methods: ["QRIS", "BCA", "GoPay", "DANA"] },
+    };
+
+    const KYC_COUNTRIES = {
+      "India":                { flag: "INR", docs: ["Aadhaar Card", "PAN Card", "Passport", "Driving License"] },
+      "United Arab Emirates": { flag: "AED", docs: ["Emirates ID", "Passport"] },
+      "Nigeria":              { flag: "NGN", docs: ["NIN Slip", "Voter's Card", "Passport"] },
+      "Pakistan":             { flag: "PKR", docs: ["CNIC", "Passport"] },
+      "Brazil":               { flag: "BRL", docs: ["CPF / RG", "CNH", "Passport"] },
+      "Philippines":          { flag: "PHP", docs: ["PhilID", "UMID", "Passport"] },
+      "Vietnam":              { flag: "VND", docs: ["CCCD", "Passport"] },
+      "Indonesia":            { flag: "IDR", docs: ["e-KTP", "Passport"] },
+      "United States":        { flag: "USD", docs: ["Driver's License", "National ID", "Passport"] },
+      "United Kingdom":       { flag: "GBP", docs: ["Driver's License", "National ID", "Passport"] },
+      "European Union":       { flag: "EUR", docs: ["National ID", "Driver's License", "Passport"] },
+      "Turkey":               { flag: "TRY", docs: ["T.C. Kimlik Kartı", "Passport"] }
+    };
+
+    const NETWORKS = ["BEP-20", "ERC-20", "POLYGON", "TRC-20", "SOL", "TON"];
+
+    /* =========================================================================
+       3. CUSTOM INLINE VECTOR SVG LOGOS (8 COINS + 12 CIRCULAR FLAGS + GOOGLE G)
+       ========================================================================= */
+    function cryptoLogoSvg(symbol, size = 26) {
+      const s = Number(size);
+      const gid = `sol_${Math.random().toString(36).slice(2, 7)}`;
+      const icons = {
+        USDT: `<svg width="${s}" height="${s}" viewBox="0 0 32 32" class="shrink-0"><circle cx="16" cy="16" r="15.5" fill="#00A67E"/><path d="M17.8 14.3V11.8h5.2V8.8H9v3h5.2v2.5c-4.1.2-7.2 1-7.2 2s3.1 1.8 7.2 2v6.1h3.6v-6.1c4.1-.2 7.2-1 7.2-2s-3.1-1.8-7.2-2zm0 3.3c-.2 0-1 .1-1.8.1-.9 0-1.6-.1-1.8-.1-3.3-.2-5.7-.7-5.7-1.3s2.4-1.1 5.7-1.3v2.1c.2 0 1 .1 1.8.1.9 0 1.6-.1 1.8-.1V15c3.3.2 5.7.7 5.7 1.3s-2.4 1.1-5.7 1.3z" fill="#FFFFFF"/></svg>`,
+        USDC: `<svg width="${s}" height="${s}" viewBox="0 0 32 32" class="shrink-0"><circle cx="16" cy="16" r="15.5" fill="#2775CA"/><circle cx="16" cy="16" r="11.5" fill="none" stroke="#FFFFFF" stroke-opacity="0.38" stroke-width="1.6"/><text x="16" y="21.5" text-anchor="middle" fill="#FFFFFF" font-size="15.5" font-weight="800" font-family="Inter,sans-serif">$</text></svg>`,
+        BTC:  `<svg width="${s}" height="${s}" viewBox="0 0 32 32" class="shrink-0"><circle cx="16" cy="16" r="15.5" fill="#F7931A"/><text x="16" y="21.8" text-anchor="middle" fill="#FFFFFF" font-size="16.5" font-weight="800" font-family="Inter,sans-serif">₿</text></svg>`,
+        ETH:  `<svg width="${s}" height="${s}" viewBox="0 0 32 32" class="shrink-0"><circle cx="16" cy="16" r="15.5" fill="#5B5CE6"/><path d="M16 5.6L9.5 16.2L16 19.9L22.5 16.2L16 5.6Z" fill="#FFFFFF"/><path d="M16 21.3L9.5 17.6L16 26.4L22.5 17.6L16 21.3Z" fill="#D5D7FF"/></svg>`,
+        BNB:  `<svg width="${s}" height="${s}" viewBox="0 0 32 32" class="shrink-0"><circle cx="16" cy="16" r="15.5" fill="#F3BA2F"/><path d="M16 7.8L11.4 12.4L13.5 14.5L16 12L18.5 14.5L20.6 12.4L16 7.8ZM9.2 14.6L7.1 16.7L9.2 18.8L11.3 16.7L9.2 14.6ZM22.8 14.6L20.7 16.7L22.8 18.8L24.9 16.7L22.8 14.6ZM16 14.3L13.8 16.5L16 18.7L18.2 16.5L16 14.3ZM16 24.2L20.6 19.6L18.5 17.5L16 20L13.5 17.5L11.4 19.6L16 24.2Z" fill="#090F0D"/></svg>`,
+        SOL:  `<svg width="${s}" height="${s}" viewBox="0 0 32 32" class="shrink-0"><defs><linearGradient id="${gid}" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#00FFA3"/><stop offset="100%" stop-color="#9945FF"/></linearGradient></defs><circle cx="16" cy="16" r="15.5" fill="#131E1B" stroke="#1E332B"/><path d="M9.2 21.2h11.2l2.4-2.4H11.6l-2.4 2.4zm0-6.8h11.2l2.4 2.4H11.6l-2.4-2.4zm13.6-2.4H11.6L9.2 9.6h11.2l2.4 2.4z" fill="url(#${gid})"/></svg>`,
+        TRX:  `<svg width="${s}" height="${s}" viewBox="0 0 32 32" class="shrink-0"><circle cx="16" cy="16" r="15.5" fill="#EB0029"/><path d="M8.5 9.2L23.8 12.3L15.4 24.5L8.5 9.2ZM11.3 11.3L15.4 20.6L20.8 13.1L11.3 11.3Z" fill="#FFFFFF"/></svg>`,
+        TON:  `<svg width="${s}" height="${s}" viewBox="0 0 32 32" class="shrink-0"><circle cx="16" cy="16" r="15.5" fill="#0098EA"/><path d="M10.1 10.4H21.9C22.9 10.4 23.5 11.5 23 12.4L16.9 23.2C16.5 23.9 15.5 23.9 15.1 23.2L9 12.4C8.5 11.5 9.1 10.4 10.1 10.4ZM15.2 12.2H11.3L15.2 19.3V12.2ZM16.8 12.2V19.3L20.7 12.2H16.8Z" fill="#FFFFFF"/></svg>`
+      };
+      return icons[symbol] || icons.USDT;
+    }
+
+    function fiatFlagSvg(code, size = 22) {
+      const s = Number(size);
+      const cid = `fg_${code}_${Math.random().toString(36).slice(2, 7)}`;
+      const flags = {
+        INR: `<rect width="32" height="10.7" fill="#FF9933"/><rect y="10.7" width="32" height="10.6" fill="#FFFFFF"/><rect y="21.3" width="32" height="10.7" fill="#138808"/><circle cx="16" cy="16" r="3.6" fill="none" stroke="#000080" stroke-width="1.3"/><circle cx="16" cy="16" r="1" fill="#000080"/>`,
+        USD: `<rect width="32" height="32" fill="#B22234"/><rect y="4.5" width="32" height="3" fill="#FFF"/><rect y="11" width="32" height="3" fill="#FFF"/><rect y="17.5" width="32" height="3" fill="#FFF"/><rect y="24" width="32" height="3" fill="#FFF"/><rect width="16" height="17.5" fill="#3C3B6E"/><circle cx="5" cy="5.5" r="1" fill="#FFF"/><circle cx="11" cy="5.5" r="1" fill="#FFF"/><circle cx="8" cy="9" r="1" fill="#FFF"/><circle cx="5" cy="12.5" r="1" fill="#FFF"/><circle cx="11" cy="12.5" r="1" fill="#FFF"/>`,
+        EUR: `<rect width="32" height="32" fill="#003399"/><circle cx="16" cy="16" r="8" fill="none" stroke="#FFCC00" stroke-width="2.2" stroke-dasharray="1.8 2.4"/>`,
+        AED: `<rect width="32" height="10.7" fill="#00732F"/><rect y="10.7" width="32" height="10.6" fill="#FFFFFF"/><rect y="21.3" width="32" height="10.7" fill="#000000"/><rect width="9.5" height="32" fill="#FF0000"/>`,
+        NGN: `<rect width="10.7" height="32" fill="#008751"/><rect x="10.7" width="10.6" height="32" fill="#FFFFFF"/><rect x="21.3" width="10.7" height="32" fill="#008751"/>`,
+        BRL: `<rect width="32" height="32" fill="#009C3B"/><polygon points="16,4 28,16 16,28 4,16" fill="#FFDF00"/><circle cx="16" cy="16" r="5.5" fill="#002776"/><path d="M11 15.2Q16 13.5 21 16.5" stroke="#FFF" stroke-width="1.2" fill="none"/>`,
+        GBP: `<rect width="32" height="32" fill="#012169"/><path d="M0 0L32 32M32 0L0 32" stroke="#FFF" stroke-width="5"/><path d="M0 0L32 32M32 0L0 32" stroke="#C8102E" stroke-width="2.4"/><path d="M16 0V32M0 16H32" stroke="#FFF" stroke-width="7"/><path d="M16 0V32M0 16H32" stroke="#C8102E" stroke-width="4"/>`,
+        PKR: `<rect width="32" height="32" fill="#01411C"/><rect width="8.5" height="32" fill="#FFFFFF"/><circle cx="20" cy="16" r="6.5" fill="#FFF"/><circle cx="21.8" cy="14.5" r="5.3" fill="#01411C"/><polygon points="23.5,11.5 24.4,13.6 26.7,13.8 24.9,15.3 25.5,17.5 23.5,16.3 21.6,17.5 22.1,15.3 20.4,13.8 22.6,13.6" fill="#FFF"/>`,
+        TRY: `<rect width="32" height="32" fill="#E30A17"/><circle cx="13.5" cy="16" r="6.5" fill="#FFF"/><circle cx="15.2" cy="16" r="5.2" fill="#E30A17"/><polygon points="20.5,16 22.6,16.7 21.3,14.9 21.3,17.1 22.6,15.3" fill="#FFF"/>`,
+        PHP: `<rect width="32" height="16" fill="#0038A8"/><rect y="16" width="32" height="16" fill="#CE1126"/><polygon points="0,0 16,16 0,32" fill="#FFF"/><circle cx="6.2" cy="16" r="3" fill="#FCD116"/>`,
+        VND: `<rect width="32" height="32" fill="#DA251D"/><polygon points="16,7.5 18.3,14.2 25.4,14.2 19.6,18.3 21.8,25 16,20.9 10.2,25 12.4,18.3 6.6,14.2 13.7,14.2" fill="#FFFF00"/>`,
+        IDR: `<rect width="32" height="16" fill="#FF0000"/><rect y="16" width="32" height="16" fill="#FFFFFF"/>`
+      };
+      return `<svg width="${s}" height="${s}" viewBox="0 0 32 32" class="rounded-full shrink-0 border border-white/15 shadow-sm"><defs><clipPath id="${cid}"><circle cx="16" cy="16" r="16"/></clipPath></defs><g clip-path="url(#${cid})">${flags[code] || flags.USD}</g></svg>`;
+    }
+
+    function googleGIconSvg(size = 20) {
+      return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" class="shrink-0" aria-hidden="true">
+        <path fill="#4285F4" d="M23.49 12.27c0-.79-.07-1.55-.2-2.27H12v4.3h6.45c-.28 1.48-1.12 2.74-2.38 3.58v2.98h3.85c2.25-2.07 3.57-5.12 3.57-8.59z"/>
+        <path fill="#34A853" d="M12 24c3.24 0 5.95-1.07 7.93-2.91l-3.85-2.98c-1.07.72-2.44 1.15-4.08 1.15-3.14 0-5.8-2.12-6.75-4.97H1.28v3.08C3.25 21.29 7.31 24 12 24z"/>
+        <path fill="#FBBC05" d="M5.25 14.29c-.24-.72-.38-1.49-.38-2.29s.14-1.57.38-2.29V6.63H1.28C.47 8.24 0 10.06 0 12s.47 3.76 1.28 5.37l3.97-3.08z"/>
+        <path fill="#EA4335" d="M12 4.75c1.76 0 3.34.61 4.58 1.79l3.44-3.44C17.95 1.19 15.24 0 12 0 7.31 0 3.25 2.71 1.28 6.63l3.97 3.08c.95-2.85 3.61-4.96 6.75-4.96z"/>
+      </svg>`;
+    }
+
+    /* =========================================================================
+       4. GLOBAL MARKET LIQUIDITY GENERATOR (ALL 12 CURRENCIES x 8 CRYPTOS)
+       ========================================================================= */
+    const VERIFIED_TRADERS = [
+      { id: "tr_vikram", name: "VikramOTC", verified: true, online: true, completion: 99.8, trades: 1842, response: "~1 min", accent: "#00D084" },
+      { id: "tr_kaito",  name: "MintDeskGlobal", verified: true, online: true, completion: 99.4, trades: 1290, response: "~2 min", accent: "#14B8A6" },
+      { id: "tr_aria",   name: "AriaLiquidity", verified: true, online: true, completion: 98.9, trades: 765, response: "~2 min", accent: "#38BDF8" },
+      { id: "tr_omar",   name: "GulfSettlement", verified: true, online: false, completion: 99.6, trades: 2104, response: "~3 min", accent: "#F59E0B" },
+      { id: "tr_nova",   name: "NovaFastP2P", verified: true, online: true, completion: 98.2, trades: 518, response: "~1 min", accent: "#A78BFA" }
+    ];
+
+    function buildRegionalInstructions(traderName, fiatCode, method) {
+      const tag = traderName.toLowerCase().replace(/[^a-z0-9]/g, "");
+      if (fiatCode === "INR") return `${method} ID: ${tag}@okhdfcbank | IMPS A/C: 501004829104 (IFSC: HDFC0001204) | Beneficiary: ${traderName}. Leave remarks blank — no crypto words.`;
+      if (fiatCode === "USD") return `${method} Handle: @${tag}pay | Email: desk@${tag}.io | Memo: Invoice #${Math.floor(1000 + Math.random() * 8999)} (Do not write crypto terms).`;
+      if (fiatCode === "EUR") return `${method} IBAN: DE89 3704 0044 0532 0130 00 | Tag: @${tag}eu | Reference: Personal Settlement.`;
+      if (fiatCode === "AED") return `${method} IBAN: AE07 0331 2345 6789 0123 456 | Account Name: ${traderName} FZE.`;
+      if (fiatCode === "NGN") return `${method} Account: 2019482011 | Bank: ${method} | Account Name: ${traderName} Ventures.`;
+      if (fiatCode === "BRL") return `${method} Key: pix@${tag}.com.br | Titular: ${traderName} Pagamentos.`;
+      if (fiatCode === "GBP") return `${method} Sort Code: 04-00-04 | Account: 48291044 | Recipient: ${traderName}.`;
+      if (fiatCode === "PKR") return `${method} Wallet / IBAN: PK36MEZN0002810104829104 | Title: ${traderName}.`;
+      if (fiatCode === "TRY") return `${method} IBAN: TR33 0006 1005 1978 6457 8413 26 | Alıcı: ${traderName}.`;
+      if (fiatCode === "PHP") return `${method} Mobile: +63 917 842 9104 | Account Name: ${traderName}.`;
+      if (fiatCode === "VND") return `${method} Account: 1903 8421 9048 11 | Bank: Techcombank | Name: ${traderName}.`;
+      return `${method} Account: 8420 1948 201 | Name: ${traderName} Global Desk. Keep transfer note empty.`;
+    }
+
+    function generateDefaultMarketOffers(fiatCode, cryptoSymbol, sideAction) {
+      const f = FIATS[fiatCode] || FIATS.INR;
+      const c = COINS[cryptoSymbol] || COINS.USDT;
+      const basePrice = c.priceUSD * f.rateUSD;
+      const offerSide = sideAction === "BUY" ? "SELL" : "BUY"; // When user BUYS, makers SELL
+      const spreads = sideAction === "BUY" ? [1.006, 1.012, 1.018, 1.024, 1.031] : [0.996, 0.991, 0.985, 0.979, 0.972];
+
+      return VERIFIED_TRADERS.map((tr, i) => {
+        const unitPrice = Number((basePrice * spreads[i]).toFixed(basePrice < 5 ? 3 : 2));
+        const minUSD = [15, 25, 50, 100, 10][i];
+        const maxUSD = [1800, 3500, 5000, 10000, 1200][i];
+        const minLimit = Math.max(1, Math.round(minUSD * f.rateUSD));
+        const maxLimit = Math.max(minLimit * 5, Math.round(maxUSD * f.rateUSD));
+        const availCrypto = Number(((maxUSD * 2.5) / c.priceUSD).toFixed(c.decimals));
+        const methods = [f.methods[i % f.methods.length], f.methods[(i + 1) % f.methods.length]].filter((v, idx, arr) => arr.indexOf(v) === idx);
+        return {
+          id: `MKT-${fiatCode}-${cryptoSymbol}-${offerSide}-${i + 1}`,
+          isSynthetic: true,
+          creatorUid: tr.id,
+          traderName: tr.name,
+          verified: tr.verified,
+          online: tr.online,
+          completion: tr.completion,
+          tradeCount: tr.trades,
+          responseTime: tr.response,
+          avatarAccent: tr.accent,
+          side: offerSide,
+          crypto: cryptoSymbol,
+          network: c.defaultNet,
+          fiat: fiatCode,
+          price: unitPrice,
+          minLimit,
+          maxLimit,
+          availableCrypto: availCrypto,
+          paymentMethods: methods,
+          paymentWindow: [15, 15, 20, 30, 15][i],
+          terms: i % 2 === 0
+            ? `Own verified ${f.country} account only. Zero crypto words in payment note. Instant release after bank credit.`
+            : `Fast 24/7 desk. Please transfer exact amount and upload UTR / transaction reference in trade chat.`,
+          paymentInstructions: buildRegionalInstructions(tr.name, fiatCode, methods[0]),
+          createdAt: Date.now() - (i + 1) * 1800000
+        };
+      });
+    }
+
+    /* =========================================================================
+       5. APPLICATION STATE, LOCAL MIRROR & REAL-TIME SYNC BRIDGES
+       ========================================================================= */
+    const state = {
+      tab: "market", // 'market' | 'trades' | 'kyc' | 'wallet' | 'profile'
+      fiat: "INR",
+      user: null, // Firebase auth user + Firestore synced profile
+      authReady: false,
+      authErrorNotice: "",
+      authLoading: false,
+
+      // Market filters
+      market: {
+        action: "BUY", // 'BUY' | 'SELL'
+        crypto: "USDT",
+        paymentFilter: "ALL",
+        amountFilter: ""
+      },
+
+      // Live collections (Firestore + Local/BroadcastChannel mirror)
+      customOffers: [],
+      trades: [],
+      kycRecord: null, // From Firestore kyc_submissions/{uid} or local mirror
+
+      // Trades view
+      tradesFilter: "active", // 'active' | 'completed'
+      openTradeId: null,
+
+      // KYC Form Draft
+      kycDraft: {
+        country: "India",
+        docType: "Aadhaar Card",
+        fullName: "",
+        dob: "",
+        docNumber: "",
+        frontImg: "",
+        backImg: "",
+        selfieImg: "",
+        resubmitting: false,
+        submitting: false
+      },
+
+      // Dispute Form Draft
+      disputeDraft: {
+        tradeId: null,
+        reason: "Payment sent but seller not releasing crypto",
+        description: "",
+        proofImg: ""
+      },
+
+      // Local Non-Custodial Wallet
+      wallet: {
+        address: "",
+        selectedNetwork: "BEP-20",
+        balances: { USDT: 0, USDC: 0, BTC: 0, ETH: 0, BNB: 0, SOL: 0, TRX: 0, TON: 0 },
+        locked: { USDT: 0, USDC: 0, BTC: 0, ETH: 0, BNB: 0, SOL: 0, TRX: 0, TON: 0 },
+        transactions: []
+      }
+    };
+
+    let bc = null;
+    let unsubUserDoc = null;
+    let unsubKycDoc = null;
+    let unsubOffersCol = null;
+    let unsubTradesCol = null;
+    let countdownInterval = null;
+    let currencyPickerTarget = "global";
+    let currencySearchVal = "";
+    let activeOfferForTrade = null;
+
+    function safeLSGet(key) {
+      try { return window.localStorage.getItem(key); } catch { return null; }
+    }
+    function safeLSSet(key, val) {
+      try { window.localStorage.setItem(key, val); return true; } catch { return false; }
+    }
+
+    function generateHexAddress() {
+      const bytes = new Uint8Array(20);
+      if (window.crypto && window.crypto.getRandomValues) {
+        window.crypto.getRandomValues(bytes);
+      } else {
+        for (let i = 0; i < 20; i++) bytes[i] = Math.floor(Math.random() * 256);
+      }
+      return "0x" + Array.from(bytes).map(b => b.toString(16).padStart(2, "0")).join("");
+    }
+
+    function loadLocalWallet() {
+      const raw = safeLSGet(WALLET_LS_KEY);
+      if (raw) {
+        try {
+          const parsed = JSON.parse(raw);
+          if (parsed.address) state.wallet.address = parsed.address;
+          if (parsed.balances) state.wallet.balances = { ...state.wallet.balances, ...parsed.balances };
+          if (parsed.locked) state.wallet.locked = { ...state.wallet.locked, ...parsed.locked };
+          if (Array.isArray(parsed.transactions)) state.wallet.transactions = parsed.transactions;
+        } catch {}
+      }
+      if (!state.wallet.address) {
+        state.wallet.address = generateHexAddress();
+        saveLocalWallet();
+      }
+    }
+
+    function saveLocalWallet() {
+      safeLSSet(WALLET_LS_KEY, JSON.stringify(state.wallet));
+    }
+
+    function loadSharedMirror() {
+      const raw = safeLSGet(SHARED_LS_KEY);
+      if (!raw) return;
+      try {
+        const d = JSON.parse(raw);
+        if (Array.isArray(d.offers)) {
+          // Merge local offers with any Firestore offers
+          const map = new Map();
+          [...d.offers, ...state.customOffers].forEach(o => { if (o && o.id) map.set(o.id, o); });
+          state.customOffers = Array.from(map.values()).sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+        }
+        if (Array.isArray(d.trades)) {
+          const tMap = new Map();
+          [...state.trades, ...d.trades].forEach(t => { if (t && t.id) tMap.set(t.id, t); });
+          state.trades = Array.from(tMap.values()).sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+        }
+        // Check if Admin Panel updated this user's KYC status via localStorage/BroadcastChannel
+        if (state.user && d.users && d.users[state.user.uid]) {
+          const mirroredUser = d.users[state.user.uid];
+          if (mirroredUser.kycStatus) {
+            state.user.kycStatus = normalizeKycStatus(mirroredUser.kycStatus);
+            if (mirroredUser.kycRejectReason) state.user.kycRejectReason = mirroredUser.kycRejectReason;
+          }
+        }
+        if (state.user && Array.isArray(d.kycRequests)) {
+          const foundKyc = d.kycRequests.find(k => k.uid === state.user.uid || k.userId === state.user.uid);
+          if (foundKyc) {
+            state.kycRecord = foundKyc;
+            if (foundKyc.status) state.user.kycStatus = normalizeKycStatus(foundKyc.status);
+            if (foundKyc.rejectionReason || foundKyc.reviewNotes) {
+              state.user.kycRejectReason = foundKyc.rejectionReason || foundKyc.reviewNotes;
+            }
+          }
+        }
+      } catch {}
+    }
+
+    function saveSharedMirror(broadcast = true) {
+      let existing = {};
+      try { existing = JSON.parse(safeLSGet(SHARED_LS_KEY) || "{}"); } catch { existing = {}; }
+
+      const usersMap = existing.users && typeof existing.users === "object" ? { ...existing.users } : {};
+      if (state.user) {
+        usersMap[state.user.uid] = {
+          ...(usersMap[state.user.uid] || {}),
+          uid: state.user.uid,
+          id: state.user.uid,
+          name: state.user.name,
+          username: state.user.name,
+          email: state.user.email,
+          photoURL: state.user.photoURL,
+          kycStatus: state.user.kycStatus,
+          kycRejectReason: state.user.kycRejectReason || "",
+          lastLoginAt: Date.now()
+        };
+      }
+
+      const kycList = Array.isArray(existing.kycRequests) ? [...existing.kycRequests] : [];
+      if (state.kycRecord) {
+        const idx = kycList.findIndex(k => k.uid === state.kycRecord.uid || k.id === state.kycRecord.id);
+        if (idx >= 0) kycList[idx] = state.kycRecord;
+        else kycList.unshift(state.kycRecord);
+      }
+
+      const payload = {
+        ...existing,
+        users: usersMap,
+        offers: state.customOffers,
+        trades: state.trades,
+        kycRequests: kycList,
+        updatedAt: Date.now()
+      };
+      safeLSSet(SHARED_LS_KEY, JSON.stringify(payload));
+      if (broadcast && bc) {
+        try { bc.postMessage({ type: "DB_UPDATED", source: "wayones_user", ts: Date.now() }); } catch {}
+      }
+    }
+
+    function normalizeKycStatus(raw) {
+      const v = String(raw || "unverified").toLowerCase();
+      if (v === "verified" || v === "approved") return "verified";
+      if (v === "pending" || v === "pending_review") return "pending";
+      if (v === "rejected" || v === "declined") return "rejected";
+      return "unverified";
+    }
+
+    /* =========================================================================
+       6. UTILITIES: ESCAPE, FORMATTING, CRYPTO HASH, CLIPBOARD, CANVAS, QR
+       ========================================================================= */
+    function esc(v) {
+      if (v === null || v === undefined) return "";
+      return String(v)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+    }
+
+    function makeId(prefix = "WY") {
+      return `${prefix}-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).slice(2, 6).toUpperCase()}`;
+    }
+
+    function getFiat(code = state.fiat) {
+      return FIATS[code] || FIATS.INR;
+    }
+
+    function fmtFiat(amount, code = state.fiat) {
+      const f = getFiat(code);
+      const n = Number(amount) || 0;
+      const digits = n >= 1000 ? 0 : (n < 5 ? 3 : 2);
+      return f.symbol + n.toLocaleString(f.locale, { minimumFractionDigits: digits, maximumFractionDigits: digits });
+    }
+
+    function fmtCrypto(amount, symbol = "USDT") {
+      const c = COINS[symbol] || COINS.USDT;
+      return (Number(amount) || 0).toFixed(c.decimals);
+    }
+
+    function shortAddr(addr) {
+      if (!addr || addr.length < 12) return addr || "";
+      return `${addr.slice(0, 6)}...${addr.slice(-4)}`;
+    }
+
+    function timeAgo(ts) {
+      const ms = typeof ts === "number" ? ts : Date.now();
+      const s = Math.max(0, Math.floor((Date.now() - ms) / 1000));
+      if (s < 60) return `${s}s ago`;
+      if (s < 3600) return `${Math.floor(s / 60)}m ago`;
+      if (s < 86400) return `${Math.floor(s / 3600)}h ago`;
+      return `${Math.floor(s / 86400)}d ago`;
+    }
+
+    function copyText(text, successMsg = "Copied to clipboard!") {
+      try {
+        const ta = document.createElement("textarea");
+        ta.value = String(text);
+        ta.setAttribute("readonly", "");
+        ta.style.position = "fixed";
+        ta.style.top = "-9999px";
+        ta.style.left = "-9999px";
+        document.body.appendChild(ta);
+        ta.select();
+        ta.setSelectionRange(0, 999999);
+        const ok = document.execCommand("copy");
+        document.body.removeChild(ta);
+        if (ok) {
+          toast(successMsg, "success");
+          return true;
+        }
+      } catch {}
+      toast("Please copy manually.", "warning");
+      return false;
+    }
+
+    async function computeHash(input) {
+      try {
+        if (window.crypto && window.crypto.subtle) {
+          const buf = await window.crypto.subtle.digest("SHA-256", new TextEncoder().encode(input));
+          return "0x" + Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, "0")).join("");
+        }
+      } catch {}
+      let h = 0x811c9dc5;
+      for (let i = 0; i < input.length; i++) {
+        h ^= input.charCodeAt(i);
+        h = Math.imul(h, 16777619);
+      }
+      return "0x" + (h >>> 0).toString(16).padStart(8, "0").repeat(8);
+    }
+
+    function compressImageCanvas(file, maxWidth = 640, quality = 0.60) {
+      return new Promise((resolve, reject) => {
+        if (!file || !file.type.startsWith("image/")) {
+          reject(new Error("Please upload a valid image file (JPG, PNG, or WebP)."));
+          return;
+        }
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+          const img = new Image();
+          img.onload = () => {
+            let w = img.width;
+            let h = img.height;
+            if (w > maxWidth) {
+              h = Math.round((h * maxWidth) / w);
+              w = maxWidth;
+            }
+            const canvas = document.createElement("canvas");
+            canvas.width = w;
+            canvas.height = h;
+            const ctx = canvas.getContext("2d");
+            ctx.fillStyle = "#FFFFFF";
+            ctx.fillRect(0, 0, w, h);
+            ctx.drawImage(img, 0, 0, w, h);
+            resolve(canvas.toDataURL("image/jpeg", quality));
+          };
+          img.onerror = () => reject(new Error("Could not decode the selected image."));
+          img.src = ev.target.result;
+        };
+        reader.onerror = () => reject(new Error("Could not read file."));
+        reader.readAsDataURL(file);
+      });
+    }
+
+    function qrCodeSvg(seed) {
+      let h = 2166136261;
+      for (let i = 0; i < seed.length; i++) { h ^= seed.charCodeAt(i); h = Math.imul(h, 16777619); }
+      const n = 21, sz = 168, cell = sz / n;
+      const isFinder = (r, c) => (r < 7 && c < 7) || (r < 7 && c >= n - 7) || (r >= n - 7 && c < 7);
+      const finder = (x, y) => `
+        <rect x="${x}" y="${y}" width="${cell * 7}" height="${cell * 7}" rx="3" fill="#090F0D"/>
+        <rect x="${x + cell}" y="${y + cell}" width="${cell * 5}" height="${cell * 5}" rx="2" fill="#FFFFFF"/>
+        <rect x="${x + cell * 2}" y="${y + cell * 2}" width="${cell * 3}" height="${cell * 3}" rx="1.5" fill="#090F0D"/>
+      `;
+      let dots = "";
+      for (let r = 0; r < n; r++) {
+        for (let c = 0; c < n; c++) {
+          if (isFinder(r, c) || (r >= 8 && r <= 12 && c >= 8 && c <= 12)) continue;
+          h = (Math.imul(h, 1664525) + 1013904223) >>> 0;
+          if ((h & 3) !== 0 && ((r + c + (h & 1)) % 2 === 0 || (h & 7) > 3)) {
+            dots += `<rect x="${(c * cell).toFixed(1)}" y="${(r * cell).toFixed(1)}" width="${(cell + 0.35).toFixed(1)}" height="${(cell + 0.35).toFixed(1)}" rx="1" fill="#090F0D"/>`;
+          }
+        }
+      }
+      return `<svg width="${sz}" height="${sz}" viewBox="0 0 ${sz} ${sz}" class="rounded-2xl bg-white p-2.5 shadow-xl">
+        <rect width="${sz}" height="${sz}" fill="#FFFFFF"/>
+        ${finder(0, 0)}${finder((n - 7) * cell, 0)}${finder(0, (n - 7) * cell)}
+        ${dots}
+        <rect x="${8 * cell}" y="${8 * cell}" width="${5 * cell}" height="${5 * cell}" rx="7" fill="#00D084"/>
+        <path d="M74 79L77.5 89L81.5 81.5L85.5 89L89 79" stroke="#051B12" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" fill="none" transform="translate(2.5, 0)"/>
+      </svg>`;
+    }
+
+    function deriveNetworkAddress(base0x, net) {
+      const hex = (base0x || "0x71C7656EC7ab88b098defB751B7401B5f6d8976F").replace(/^0x/i, "");
+      if (["BEP-20", "ERC-20", "POLYGON"].includes(net)) return "0x" + hex;
+      if (net === "TRC-20") return "T" + hex.slice(0, 33).replace(/0/g, "A").toUpperCase();
+      if (net === "SOL") return "SoL" + hex.slice(0, 41);
+      if (net === "TON") return "UQ" + hex.slice(0, 46);
+      return "0x" + hex;
+    }
+
+    function toast(msg, type = "info") {
+      const host = document.getElementById("toast-host");
+      if (!host) return;
+      const styles = {
+        success: "border-mint/50 bg-[#0A1E17]/95 text-emerald-100",
+        error:   "border-coral/50 bg-[#251116]/95 text-red-100",
+        warning: "border-amberc/50 bg-[#241B0E]/95 text-amber-100",
+        info:    "border-tealc/50 bg-[#0D1E1D]/95 text-crisp"
+      };
+      const dots = { success: "bg-mint", error: "bg-coral", warning: "bg-amberc", info: "bg-tealc" };
+      const el = document.createElement("div");
+      el.className = `pointer-events-auto anim-in flex items-center gap-2.5 px-4 py-3 rounded-2xl border ${styles[type] || styles.info} backdrop-blur-xl shadow-2xl text-xs sm:text-sm font-semibold`;
+      el.innerHTML = `<span class="w-2 h-2 rounded-full ${dots[type] || dots.info} shrink-0"></span><span class="flex-1 leading-snug">${esc(msg)}</span>`;
+      host.appendChild(el);
+      setTimeout(() => {
+        el.style.opacity = "0";
+        el.style.transition = "opacity 0.2s ease";
+        setTimeout(() => el.remove(), 220);
+      }, 3800);
+    }
+
+    function renderAvatar(photoURL, name, sizeClass = "w-9 h-9 text-xs") {
+      const initial = esc((name || "W").trim().charAt(0).toUpperCase() || "W");
+      if (photoURL) {
+        return `
+          <div class="relative ${sizeClass} rounded-full overflow-hidden shrink-0 border border-mint/40 bg-mint/15">
+            <img src="${esc(photoURL)}" alt="${esc(name || "User")}" referrerpolicy="no-referrer" class="w-full h-full object-cover" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';" />
+            <div style="display:none" class="w-full h-full items-center justify-center font-extrabold text-mint bg-panel">${initial}</div>
+          </div>
+        `;
+      }
+      return `<div class="${sizeClass} rounded-full shrink-0 border border-mint/40 bg-mint/15 flex items-center justify-center font-extrabold text-mint">${initial}</div>`;
+    }
+
+    /* =========================================================================
+       7. FIREBASE AUTHENTICATION & REAL-TIME FIRESTORE LISTENERS
+       ========================================================================= */
+    function detachUserListeners() {
+      if (unsubUserDoc) { try { unsubUserDoc(); } catch {} unsubUserDoc = null; }
+      if (unsubKycDoc) { try { unsubKycDoc(); } catch {} unsubKycDoc = null; }
+    }
+
+    async function syncFirebaseUserAndListen(fbUser) {
+      detachUserListeners();
+      if (!fbUser) {
+        state.user = null;
+        state.kycRecord = null;
+        renderAll();
+        return;
+      }
+
+      state.user = {
+        uid: fbUser.uid,
+        name: fbUser.displayName || (fbUser.email ? fbUser.email.split("@")[0] : "Wayones Trader"),
+        email: fbUser.email || "",
+        photoURL: fbUser.photoURL || "",
+        kycStatus: "unverified",
+        kycRejectReason: ""
+      };
+      loadSharedMirror();
+      renderAll();
+
+      if (!db) {
+        saveSharedMirror(true);
+        return;
+      }
+
+      const userRef = doc(db, "users", fbUser.uid);
+      try {
+        const snap = await getDoc(userRef);
+        const existingData = snap.exists() ? snap.data() : {};
+        const preservedKyc = normalizeKycStatus(existingData.kycStatus || state.user.kycStatus || "unverified");
+        state.user.kycStatus = preservedKyc;
+        state.user.kycRejectReason = existingData.kycRejectReason || existingData.rejectionReason || "";
+
+        await setDoc(userRef, {
+          uid: fbUser.uid,
+          name: state.user.name,
+          email: state.user.email,
+          photoURL: state.user.photoURL,
+          kycStatus: preservedKyc,
+          lastLoginAt: serverTimestamp()
+        }, { merge: true });
+        saveSharedMirror(true);
+      } catch (err) {
+        console.warn("Firestore user profile write notice:", err?.code || err?.message);
+        saveSharedMirror(true);
+      }
+
+      // Real-time listener on users/{uid} (instant KYC Approval/Rejection from Admin Panel)
+      try {
+        unsubUserDoc = onSnapshot(userRef, (snap) => {
+          if (!snap.exists() || !state.user) return;
+          const d = snap.data();
+          const prevStatus = state.user.kycStatus;
+          const nextStatus = normalizeKycStatus(d.kycStatus);
+          state.user.kycStatus = nextStatus;
+          state.user.kycRejectReason = d.kycRejectReason || d.rejectionReason || state.user.kycRejectReason || "";
+          if (d.name) state.user.name = d.name;
+
+          if (prevStatus !== nextStatus && prevStatus !== "unverified") {
+            if (nextStatus === "verified") toast("Your National ID has been Verified by Wayones!", "success");
+            else if (nextStatus === "rejected") toast("KYC verification requires updates. Check Verify ID tab.", "warning");
+          }
+          saveSharedMirror(false);
+          renderAll();
+        }, (err) => {
+          console.warn("users/{uid} listener paused:", err?.code || err?.message);
+        });
+      } catch {}
+
+      // Real-time listener on kyc_submissions/{uid}
+      try {
+        const kycRef = doc(db, "kyc_submissions", fbUser.uid);
+        unsubKycDoc = onSnapshot(kycRef, (snap) => {
+          if (!snap.exists() || !state.user) return;
+          const d = snap.data();
+          state.kycRecord = { ...d, uid: fbUser.uid };
+          if (d.status) {
+            const st = normalizeKycStatus(d.status);
+            state.user.kycStatus = st;
+          }
+          if (d.rejectionReason || d.reviewNotes) {
+            state.user.kycRejectReason = d.rejectionReason || d.reviewNotes;
+          }
+          saveSharedMirror(false);
+          renderAll();
+        }, (err) => {
+          console.warn("kyc_submissions/{uid} listener paused:", err?.code || err?.message);
+        });
+      } catch {}
+    }
+
+    function attachGlobalFirestoreListeners() {
+      if (!db) return;
+      try {
+        unsubOffersCol = onSnapshot(collection(db, "offers"), (snap) => {
+          const remote = [];
+          snap.forEach((docSnap) => {
+            const d = docSnap.data();
+            if (d && d.isActive !== false) remote.push({ id: docSnap.id, ...d });
+          });
+          if (remote.length) {
+            const map = new Map();
+            state.customOffers.forEach(o => map.set(o.id, o));
+            remote.forEach(o => map.set(o.id, o));
+            state.customOffers = Array.from(map.values()).sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+            if (state.tab === "market") refreshMarketOffersList();
+          }
+        }, (err) => console.warn("offers listener notice:", err?.code || err?.message));
+      } catch {}
+
+      try {
+        unsubTradesCol = onSnapshot(collection(db, "trades"), (snap) => {
+          const remote = [];
+          snap.forEach((docSnap) => {
+            const d = docSnap.data();
+            if (d) remote.push({ id: docSnap.id, ...d });
+          });
+          if (remote.length) {
+            const map = new Map();
+            state.trades.forEach(t => map.set(t.id, t));
+            remote.forEach(t => map.set(t.id, t));
+            state.trades = Array.from(map.values()).sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+            updateChrome();
+            if (state.tab === "trades") renderAll();
+          }
+        }, (err) => console.warn("trades listener notice:", err?.code || err?.message));
+      } catch {}
+    }
+
+    async function triggerGoogleSignIn() {
+      if (!auth || !googleProvider) {
+        state.authErrorNotice = "Authentication SDK is initializing. Please refresh and try again.";
+        renderAuthModal();
+        return;
+      }
+
+      state.authLoading = true;
+      state.authErrorNotice = "";
+      renderAuthModal();
+
+      try {
+        const result = await signInWithPopup(auth, googleProvider);
+        state.authLoading = false;
+        if (result?.user) {
+          closeModal();
+          toast(`Signed in as ${result.user.displayName || result.user.email}`, "success");
+        }
+      } catch (err) {
+        const code = err?.code || "";
+        if (code === "auth/popup-blocked" || code === "auth/operation-not-supported-in-this-environment") {
+          try {
+            await signInWithRedirect(auth, googleProvider);
+            return;
+          } catch (redirErr) {
+            handleAuthError(redirErr);
+          }
+        } else {
+          handleAuthError(err);
+        }
+      }
+    }
+
+    function handleAuthError(err) {
+      state.authLoading = false;
+      const code = err?.code || "";
+      if (code === "auth/unauthorized-domain") {
+        state.authErrorNotice = "Google Sign-In activates automatically once hosted on your Firebase domain (wayones-595fb.web.app) or an authorized domain in Firebase Console.";
+        toast("Google Sign-In activates automatically once hosted on Firebase (wayones-595fb.web.app).", "info");
+      } else if (code === "auth/popup-closed-by-user" || code === "auth/cancelled-popup-request") {
+        state.authErrorNotice = "Sign-in window was closed before completing. Tap Continue with Google to try again.";
+      } else {
+        state.authErrorNotice = err?.message || "Unable to sign in right now. Please try again.";
+      }
+      renderAuthModal();
+    }
+
+    async function handleSignOut() {
+      try {
+        if (auth) await signOut(auth);
+      } catch (err) {
+        console.warn("Sign out error:", err);
+      }
+      detachUserListeners();
+      state.user = null;
+      state.kycRecord = null;
+      closeModal();
+      renderAll();
+      toast("Signed out securely.", "info");
+    }
+
+    function openAuthModal() {
+      state.authErrorNotice = "";
+      state.authLoading = false;
+      renderAuthModal();
+    }
+
+    function renderAuthModal() {
+      openModal(`
+        <div class="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/80 backdrop-blur-sm" onclick="window.wayones.backdropClose(event)">
+          <div class="anim-in w-full sm:max-w-md bg-card border-t sm:border border-borderc rounded-t-3xl sm:rounded-3xl p-6 space-y-5 shadow-2xl" onclick="event.stopPropagation()">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-2.5">
+                <div class="w-10 h-10 rounded-xl brand-grad flex items-center justify-center shadow-mint">
+                  <svg width="21" height="21" viewBox="0 0 28 28" fill="none"><path d="M4.5 9.2L8.4 19.6C8.8 20.6 10.2 20.6 10.6 19.6L13.5 12.6C13.7 12.1 14.3 12.1 14.5 12.6L17.4 19.6C17.8 20.6 19.2 20.6 19.6 19.6L23.5 9.2" stroke="#051B12" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </div>
+                <div>
+                  <h3 class="text-base font-extrabold text-crisp">Welcome to Wayones</h3>
+                  <p class="text-xs text-muted">Global P2P Crypto Marketplace</p>
+                </div>
+              </div>
+              <button type="button" onclick="window.wayones.closeModal()" class="w-9 h-9 rounded-xl bg-panel hover:bg-borderc text-muted flex items-center justify-center">✕</button>
+            </div>
+
+            <div class="space-y-2 text-center pt-1">
+              <h4 class="text-lg font-extrabold text-crisp">Sign In or Create Account</h4>
+              <p class="text-xs text-muted leading-relaxed">
+                One-tap verified access with your Google account. No passwords to remember, instant escrow & KYC sync.
+              </p>
+            </div>
+
+            <button type="button" ${state.authLoading ? "disabled" : ""} onclick="window.wayones.googleSignIn()" class="w-full h-12 px-4 rounded-2xl bg-white hover:bg-slate-100 active:scale-[0.99] text-[#111827] font-bold text-sm flex items-center justify-center gap-3 shadow-lg transition-all ${state.authLoading ? "opacity-75 cursor-not-allowed" : ""}">
+              ${state.authLoading
+                ? `<span class="w-5 h-5 rounded-full border-2 border-[#111827] border-t-transparent animate-spin"></span><span>Connecting to Google...</span>`
+                : `${googleGIconSvg(20)}<span>Continue with Google</span>`
+              }
+            </button>
+
+            ${state.authErrorNotice ? `
+              <div class="p-3.5 rounded-2xl bg-tealc/12 border border-tealc/35 text-xs text-emerald-100 leading-relaxed">
+                <div class="font-bold text-mint mb-1">Host Domain Notice</div>
+                ${esc(state.authErrorNotice)}
+              </div>
+            ` : ""}
+
+            <div class="grid grid-cols-3 gap-2 pt-1">
+              <div class="bg-panel border border-borderc rounded-2xl p-2.5 text-center">
+                <div class="text-mint text-sm font-extrabold">✓</div>
+                <div class="text-[11px] font-bold text-crisp mt-0.5">Verified Gmail</div>
+              </div>
+              <div class="bg-panel border border-borderc rounded-2xl p-2.5 text-center">
+                <div class="text-mint text-sm font-extrabold">🔒</div>
+                <div class="text-[11px] font-bold text-crisp mt-0.5">Escrow Shield</div>
+              </div>
+              <div class="bg-panel border border-borderc rounded-2xl p-2.5 text-center">
+                <div class="text-mint text-sm font-extrabold">⚡</div>
+                <div class="text-[11px] font-bold text-crisp mt-0.5">Instant Access</div>
+              </div>
+            </div>
+
+            <p class="text-[11px] text-center text-muted leading-relaxed">
+              Protected by non-custodial escrow & end-to-end verified sessions.
+            </p>
+          </div>
+        </div>
+      `);
+    }
+
+    /* =========================================================================
+       8. HEADER CHROME & SEARCHABLE 12-CURRENCY FLAG PICKER
+       ========================================================================= */
+    function updateChrome() {
+      const f = getFiat(state.fiat);
+      const flagEl = document.getElementById("hdr-fiat-flag");
+      const codeEl = document.getElementById("hdr-fiat-code");
+      const nameEl = document.getElementById("hdr-fiat-name");
+      if (flagEl) flagEl.innerHTML = fiatFlagSvg(f.code, 20);
+      if (codeEl) codeEl.textContent = f.code;
+      if (nameEl) nameEl.textContent = f.name;
+
+      const u = state.user;
+      const authBtn = document.getElementById("hdr-auth-btn");
+      const authAv = document.getElementById("hdr-auth-avatar");
+      const authLbl = document.getElementById("hdr-auth-label");
+
+      if (u) {
+        if (authBtn) authBtn.className = "h-10 pl-1.5 pr-3 rounded-xl bg-panel hover:bg-borderc/80 border border-mint/40 text-crisp font-bold text-xs flex items-center gap-2 transition-all";
+        if (authAv) {
+          authAv.classList.remove("hidden");
+          authAv.innerHTML = renderAvatar(u.photoURL, u.name, "w-7 h-7 text-[11px]");
+        }
+        if (authLbl) authLbl.textContent = u.name.split(" ")[0];
+      } else {
+        if (authBtn) authBtn.className = "h-10 px-3.5 rounded-xl bg-mint hover:bg-mint-hover text-[#051B12] font-extrabold text-xs flex items-center gap-2 transition-all shadow-mint";
+        if (authAv) { authAv.classList.add("hidden"); authAv.innerHTML = ""; }
+        if (authLbl) authLbl.textContent = "Sign In";
+      }
+
+      const kycColor = !u ? "bg-muted/60" : u.kycStatus === "verified" ? "bg-mint" : u.kycStatus === "rejected" ? "bg-coral" : u.kycStatus === "pending" ? "bg-amberc" : "bg-muted";
+      const dDot = document.getElementById("desk-kyc-dot");
+      const mDot = document.getElementById("mob-kyc-dot");
+      if (dDot) dDot.className = `w-2 h-2 rounded-full ${kycColor}`;
+      if (mDot) mDot.className = `w-2 h-2 rounded-full ${kycColor} absolute -top-0.5 -right-1`;
+
+      const activeTradesCount = state.trades.filter(t => ["escrow_locked", "paid", "disputed"].includes(t.status)).length;
+      ["desk-trades-badge", "mob-trades-badge"].forEach(id => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.textContent = String(activeTradesCount);
+        el.classList.toggle("hidden", activeTradesCount === 0);
+      });
+
+      document.querySelectorAll(".desk-nav").forEach(btn => {
+        const active = btn.dataset.tab === state.tab;
+        btn.className = `desk-nav px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
+          active ? "bg-mint text-[#051B12] shadow-mint" : "text-muted hover:text-crisp hover:bg-white/[0.04]"
+        }`;
+      });
+      document.querySelectorAll(".mob-nav").forEach(btn => {
+        const active = btn.dataset.tab === state.tab;
+        btn.classList.toggle("text-mint", active);
+        btn.classList.toggle("text-muted", !active);
+      });
+    }
+
+    function renderCurrencyListHtml() {
+      const q = (currencySearchVal || "").trim().toLowerCase();
+      const activeCode = currencyPickerTarget === "global" ? state.fiat : currencyPickerTarget;
+      const list = Object.values(FIATS).filter(f =>
+        !q ||
+        f.code.toLowerCase().includes(q) ||
+        f.name.toLowerCase().includes(q) ||
+        f.country.toLowerCase().includes(q) ||
+        f.methods.some(m => m.toLowerCase().includes(q))
+      );
+      if (!list.length) {
+        return `<div class="col-span-full py-8 text-center text-xs text-muted">No matching currencies found.</div>`;
+      }
+      return list.map(f => {
+        const selected = f.code === activeCode;
+        return `
+          <button type="button" onclick="window.wayones.pickCurrency('${f.code}')" class="p-3 rounded-2xl border text-left flex items-center gap-3 transition-all ${
+            selected ? "bg-mint/15 border-mint" : "bg-panel hover:border-mint/45 border-borderc"
+          }">
+            ${fiatFlagSvg(f.code, 28)}
+            <div class="min-w-0 flex-1">
+              <div class="flex items-center justify-between gap-1">
+                <span class="text-xs font-extrabold text-crisp">${f.code} <span class="text-mint">(${f.symbol})</span></span>
+                ${selected ? `<span class="text-[10px] font-extrabold text-mint">Active ✓</span>` : ""}
+              </div>
+              <div class="text-xs font-semibold text-crisp/90 truncate">${esc(f.name)}</div>
+              <div class="text-[10px] text-muted truncate">${esc(f.methods.slice(0, 3).join(" • "))}</div>
+            </div>
+          </button>
+        `;
+      }).join("");
+    }
+
+    function openCurrencyModal(target = "global") {
+      currencyPickerTarget = target;
+      currencySearchVal = "";
+      openModal(`
+        <div class="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/80 backdrop-blur-sm" onclick="window.wayones.backdropClose(event)">
+          <div class="anim-in w-full sm:max-w-lg max-h-[86vh] flex flex-col bg-card border-t sm:border border-borderc rounded-t-3xl sm:rounded-3xl shadow-2xl overflow-hidden" onclick="event.stopPropagation()">
+            <div class="flex items-center justify-between px-5 py-4 bg-panel border-b border-borderc">
+              <div>
+                <h3 class="text-base font-extrabold text-crisp">Select Country Currency</h3>
+                <p class="text-xs text-muted">12 supported currencies with local payment rails</p>
+              </div>
+              <button type="button" onclick="window.wayones.closeModal()" class="w-9 h-9 rounded-xl bg-obsidian text-muted flex items-center justify-center">✕</button>
+            </div>
+            <div class="p-4 pb-2 bg-card">
+              <input id="fiat-search-inp" type="search" oninput="window.wayones.filterCurrencies(this.value)" placeholder="Search INR, USD, EUR, UPI, PIX, GCash, OPay..." class="w-full h-11 px-3.5 rounded-xl bg-panel border border-borderc focus:border-mint focus:outline-none text-sm text-crisp placeholder-muted/70" />
+            </div>
+            <div id="fiat-list-container" class="p-4 pt-2 overflow-y-auto grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+              ${renderCurrencyListHtml()}
+            </div>
+          </div>
+        </div>
+      `);
+      setTimeout(() => document.getElementById("fiat-search-inp")?.focus(), 40);
+    }
+
+    /* =========================================================================
+       9. TAB 1: P2P MARKET + POST OFFER MODAL + TRADE CREATION MODAL
+       ========================================================================= */
+    function getVisibleOffers() {
+      const { action, crypto, paymentFilter, amountFilter } = state.market;
+      const desiredSide = action === "BUY" ? "SELL" : "BUY";
+      const amt = parseFloat(amountFilter);
+
+      const userPosted = state.customOffers.filter(o =>
+        o.side === desiredSide && o.crypto === crypto && o.fiat === state.fiat && o.isActive !== false
+      );
+      const synthetic = generateDefaultMarketOffers(state.fiat, crypto, action);
+      const combined = [...userPosted, ...synthetic];
+
+      return combined.filter(o => {
+        if (paymentFilter !== "ALL") {
+          const methods = Array.isArray(o.paymentMethods) ? o.paymentMethods : [o.paymentMethod || ""];
+          const hit = methods.some(m => m.toLowerCase().includes(paymentFilter.toLowerCase()));
+          if (!hit) return false;
+        }
+        if (!isNaN(amt) && amt > 0) {
+          if (amt < o.minLimit || amt > o.maxLimit) return false;
+        }
+        return true;
+      });
+    }
+
+    function renderOfferCardsHtml() {
+      const offers = getVisibleOffers();
+      const isBuy = state.market.action === "BUY";
+      const fMeta = getFiat(state.fiat);
+
+      if (!offers.length) {
+        return `
+          <div class="bg-card border border-borderc rounded-2xl p-8 text-center">
+            <h3 class="text-base font-extrabold text-crisp">No matching offers found</h3>
+            <p class="text-xs text-muted mt-1 mb-4">Try adjusting your payment filter or amount limit, or post your own custom P2P offer.</p>
+            <div class="flex flex-wrap justify-center gap-2">
+              <button type="button" onclick="window.wayones.resetMarketFilters()" class="h-10 px-4 rounded-xl bg-panel border border-borderc text-xs font-bold text-crisp">Clear Filters</button>
+              <button type="button" onclick="window.wayones.openPostOfferModal()" class="h-10 px-4 rounded-xl bg-mint text-[#051B12] text-xs font-extrabold shadow-mint">+ Post Offer</button>
+            </div>
+          </div>
+        `;
+      }
+
+      return offers.map(o => {
+        const methods = Array.isArray(o.paymentMethods) ? o.paymentMethods : [o.paymentMethod || fMeta.methods[0]];
+        const isMine = state.user && o.creatorUid === state.user.uid;
+        return `
+          <div class="bg-card hover:border-mint/45 border ${isMine ? "border-mint/60" : "border-borderc"} rounded-2xl p-4 sm:p-5 transition-all shadow-card">
+            <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+              <!-- Trader Info -->
+              <div class="flex items-start gap-3 lg:w-[29%] min-w-0">
+                <div class="relative shrink-0">
+                  <div class="w-11 h-11 rounded-2xl flex items-center justify-center font-extrabold text-sm uppercase border border-white/10" style="background:${o.avatarAccent || "#00D084"}22;color:${o.avatarAccent || "#00D084"}">
+                    ${esc((o.traderName || "W").charAt(0))}
+                  </div>
+                  <span class="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-card ${o.online ? "bg-mint" : "bg-muted/60"}" title="${o.online ? "Online Now" : "Recently Active"}"></span>
+                </div>
+                <div class="min-w-0 flex-1">
+                  <div class="flex items-center gap-1.5 flex-wrap">
+                    <span class="font-bold text-crisp text-sm sm:text-base truncate">${esc(o.traderName)}</span>
+                    ${o.verified ? `<span class="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md bg-mint/15 border border-mint/35 text-mint text-[10px] font-extrabold">✓ Verified</span>` : ""}
+                    ${isMine ? `<span class="px-1.5 py-0.5 rounded-md bg-tealc/20 text-tealc text-[10px] font-extrabold">Your Ad</span>` : ""}
+                  </div>
+                  <div class="text-[11px] text-muted mt-1 tabular-nums flex flex-wrap items-center gap-x-2 gap-y-0.5">
+                    <span><strong class="text-crisp">${o.tradeCount || 1}</strong> trades</span>
+                    <span>•</span>
+                    <span><strong class="text-mint">${Number(o.completion || 100).toFixed(1)}%</strong> completion</span>
+                    <span>•</span>
+                    <span>⚡ ${esc(o.responseTime || "~2 min")}</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Payment Methods & Terms -->
+              <div class="lg:w-[37%] space-y-2">
+                <div class="flex flex-wrap gap-1.5">
+                  ${methods.map(m => `
+                    <span class="px-2.5 py-1 rounded-lg bg-panel border border-borderc text-[11px] font-bold text-crisp inline-flex items-center gap-1.5">
+                      <span class="w-1.5 h-1.5 rounded-full bg-mint"></span>${esc(m)}
+                    </span>
+                  `).join("")}
+                  <span class="px-2 py-1 rounded-lg bg-obsidian border border-borderc text-[10px] font-semibold text-muted">${esc(o.network || COINS[o.crypto].defaultNet)} • ${o.paymentWindow || 15}m</span>
+                </div>
+                <p class="text-xs text-muted leading-relaxed line-clamp-2">${esc(o.terms)}</p>
+              </div>
+
+              <!-- Unit Price, Limits & Action CTA -->
+              <div class="flex items-end sm:items-center justify-between lg:justify-end gap-4 lg:w-[34%] pt-3 lg:pt-0 border-t lg:border-t-0 border-borderc">
+                <div class="lg:text-right">
+                  <div class="inline-flex items-center gap-1.5 text-[11px] text-muted lg:justify-end">
+                    ${fiatFlagSvg(fMeta.code, 14)}
+                    <span>Price / 1 ${o.crypto}</span>
+                  </div>
+                  <div class="text-xl sm:text-2xl font-extrabold text-crisp tabular-nums tracking-tight mt-0.5">${fmtFiat(o.price, o.fiat)}</div>
+                  <div class="text-xs text-crisp/80 mt-0.5 tabular-nums">Limit: <strong>${fmtFiat(o.minLimit, o.fiat)} – ${fmtFiat(o.maxLimit, o.fiat)}</strong></div>
+                  <div class="text-[11px] text-muted tabular-nums">Available: ${fmtCrypto(o.availableCrypto, o.crypto)} ${o.crypto}</div>
+                </div>
+                <div class="shrink-0">
+                  <button type="button" onclick="window.wayones.openCreateTradeModal('${esc(o.id)}')" class="h-11 px-5 rounded-xl font-extrabold text-sm transition-all active:scale-[0.98] ${
+                    isBuy ? "bg-mint hover:bg-mint-hover text-[#051B12] shadow-mint" : "bg-coral hover:bg-red-500 text-white"
+                  }">${isBuy ? "Buy" : "Sell"} ${o.crypto}</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join("");
+    }
+
+    function refreshMarketOffersList() {
+      const container = document.getElementById("market-offers-container");
+      const countEl = document.getElementById("market-offers-count");
+      if (container) container.innerHTML = renderOfferCardsHtml();
+      if (countEl) {
+        const list = getVisibleOffers();
+        countEl.textContent = `${list.length} Live ${state.market.crypto} Offers in ${state.fiat} (${getFiat(state.fiat).name})`;
+      }
+    }
+
+    function renderMarketTab() {
+      const m = state.market;
+      const fMeta = getFiat(state.fiat);
+      const cMeta = COINS[m.crypto];
+      const offers = getVisibleOffers();
+
+      return `
+        <!-- Hero & Controls -->
+        <section class="hero-glow border border-borderc rounded-3xl p-4 sm:p-6 mb-5 shadow-card">
+          <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-5">
+            <div>
+              <div class="flex items-center gap-2 flex-wrap mb-2">
+                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-mint/15 border border-mint/35 text-mint text-[11px] font-bold">
+                  <span class="w-2 h-2 rounded-full bg-mint animate-pulse"></span>
+                  Live Non-Custodial Escrow
+                </span>
+                <span class="px-2.5 py-1 rounded-full bg-tealc/15 border border-tealc/35 text-tealc text-[11px] font-bold">
+                  12 Countries • 8 Cryptos
+                </span>
+              </div>
+              <h1 class="text-xl sm:text-2xl font-extrabold text-crisp tracking-tight">Peer-to-Peer Crypto Marketplace</h1>
+              <p class="text-xs sm:text-sm text-muted mt-1">
+                Trade directly with verified counterparties using local payment methods & smart escrow protection.
+              </p>
+            </div>
+
+            <div class="flex items-center gap-2.5 self-start md:self-auto">
+              <div class="bg-obsidian/85 border border-borderc rounded-2xl px-3.5 py-2.5 flex items-center gap-2.5">
+                ${cryptoLogoSvg(m.crypto, 30)}
+                <div>
+                  <div class="text-[10px] text-muted font-semibold">${cMeta.name} Spot</div>
+                  <div class="text-sm font-extrabold text-crisp tabular-nums">${fmtFiat(cMeta.priceUSD * fMeta.rateUSD, state.fiat)}</div>
+                </div>
+              </div>
+              <button type="button" onclick="window.wayones.openPostOfferModal()" class="h-12 px-4 rounded-2xl bg-mint hover:bg-mint-hover text-[#051B12] font-extrabold text-xs sm:text-sm shadow-mint shrink-0 transition-all">
+                + Post Offer
+              </button>
+            </div>
+          </div>
+
+          <!-- Buy / Sell Segmented Switch + Scrollable Crypto Pills -->
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div class="grid grid-cols-2 p-1 rounded-2xl bg-obsidian border border-borderc sm:w-56 shrink-0">
+              <button type="button" onclick="window.wayones.setMarketAction('BUY')" class="h-10 rounded-xl text-xs sm:text-sm font-extrabold transition-all ${m.action === "BUY" ? "bg-mint text-[#051B12]" : "text-muted hover:text-crisp"}">Buy</button>
+              <button type="button" onclick="window.wayones.setMarketAction('SELL')" class="h-10 rounded-xl text-xs sm:text-sm font-extrabold transition-all ${m.action === "SELL" ? "bg-coral text-white" : "text-muted hover:text-crisp"}">Sell</button>
+            </div>
+
+            <div class="flex items-center gap-2 overflow-x-auto no-scrollbar pb-0.5">
+              ${Object.keys(COINS).map(sym => {
+                const active = m.crypto === sym;
+                return `
+                  <button type="button" onclick="window.wayones.setMarketCrypto('${sym}')" class="h-11 flex items-center gap-2 px-3 rounded-xl whitespace-nowrap border transition-all ${
+                    active ? "bg-mint/18 border-mint text-crisp" : "bg-panel border-borderc text-muted hover:text-crisp"
+                  }">
+                    ${cryptoLogoSvg(sym, 20)}
+                    <div class="text-left leading-tight">
+                      <div class="text-xs font-extrabold ${active ? "text-mint" : "text-crisp"}">${sym}</div>
+                      <div class="text-[9px] text-muted">${COINS[sym].name}</div>
+                    </div>
+                  </button>
+                `;
+              }).join("")}
+            </div>
+          </div>
+        </section>
+
+        <!-- Searchable Currency, Amount Filter & Payment Method Pills -->
+        <section class="bg-card border border-borderc rounded-2xl p-3.5 sm:p-4 mb-5 space-y-3">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label class="block text-[11px] font-semibold text-muted mb-1">Country Currency</label>
+              <button type="button" onclick="window.wayones.openCurrencyModal('global')" class="w-full h-11 px-3.5 rounded-xl bg-panel border border-borderc hover:border-mint/50 flex items-center justify-between gap-2 text-left transition-colors">
+                <span class="flex items-center gap-2.5 min-w-0">
+                  ${fiatFlagSvg(fMeta.code, 22)}
+                  <span class="text-xs sm:text-sm font-extrabold text-crisp truncate">${fMeta.code} (${fMeta.symbol}) — ${esc(fMeta.name)}</span>
+                </span>
+                <span class="text-[11px] font-bold text-mint shrink-0">Change</span>
+              </button>
+            </div>
+
+            <div>
+              <label class="block text-[11px] font-semibold text-muted mb-1">Quick Amount Filter (${fMeta.code})</label>
+              <div class="relative flex items-center">
+                <span class="absolute left-3.5 text-mint font-bold text-sm">${fMeta.symbol}</span>
+                <input id="market-amt-filter" type="number" step="any" value="${esc(m.amountFilter)}" oninput="window.wayones.setAmountFilter(this.value)" placeholder="Enter amount (e.g. ${Math.round(100 * fMeta.rateUSD)})" class="w-full h-11 pl-9 pr-16 rounded-xl bg-panel border border-borderc focus:border-mint focus:outline-none text-sm font-semibold text-crisp placeholder-muted/60 tabular-nums" />
+                <span class="absolute right-3.5 text-xs font-bold text-muted">${fMeta.code}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Payment Method Filter Pills -->
+          <div class="flex items-center gap-2 overflow-x-auto no-scrollbar pt-0.5">
+            <button type="button" onclick="window.wayones.setPaymentFilter('ALL')" class="h-8 px-3 rounded-lg text-xs font-bold whitespace-nowrap border transition-all ${
+              m.paymentFilter === "ALL" ? "bg-mint text-[#051B12] border-mint" : "bg-panel text-muted border-borderc hover:text-crisp"
+            }">All Payments</button>
+            ${fMeta.methods.map(pm => {
+              const on = m.paymentFilter === pm;
+              return `
+                <button type="button" onclick="window.wayones.setPaymentFilter('${esc(pm)}')" class="h-8 px-3 rounded-lg text-xs font-bold whitespace-nowrap border transition-all ${
+                  on ? "bg-mint text-[#051B12] border-mint" : "bg-panel text-muted border-borderc hover:text-crisp"
+                }">${esc(pm)}</button>
+              `;
+            }).join("")}
+          </div>
+        </section>
+
+        <!-- Offers Count Header -->
+        <div class="flex items-center justify-between mb-3 px-1">
+          <span id="market-offers-count" class="text-xs font-bold text-crisp/85 tabular-nums">${offers.length} Live ${m.crypto} Offers in ${fMeta.code} (${fMeta.name})</span>
+          <span class="text-[11px] text-muted hidden sm:inline">0.5% Escrow Fee • Zero Fees on Cancelled Orders</span>
+        </div>
+
+        <!-- Offer Cards List -->
+        <div id="market-offers-container" class="flex flex-col gap-3">
+          ${renderOfferCardsHtml()}
+        </div>
+      `;
+    }
+
+    function openPostOfferModal() {
+      if (!state.user) {
+        toast("Please sign in with Google to post a P2P offer.", "info");
+        openAuthModal();
+        return;
+      }
+      const f = getFiat(state.fiat);
+      const c = COINS[state.market.crypto];
+      const defPrice = (c.priceUSD * f.rateUSD).toFixed(c.priceUSD * f.rateUSD < 5 ? 3 : 2);
+      const defMin = Math.round(20 * f.rateUSD);
+      const defMax = Math.round(2000 * f.rateUSD);
+
+      openModal(`
+        <div class="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/80 backdrop-blur-sm" onclick="window.wayones.backdropClose(event)">
+          <div class="anim-in w-full sm:max-w-lg max-h-[92vh] overflow-y-auto bg-card border-t sm:border border-borderc rounded-t-3xl sm:rounded-3xl p-5 sm:p-6 space-y-4 shadow-2xl" onclick="event.stopPropagation()">
+            <div class="flex items-center justify-between">
+              <div>
+                <h3 class="text-base font-extrabold text-crisp">Post New P2P Offer</h3>
+                <p class="text-xs text-muted">Published live to Marketplace & synced with Firestore</p>
+              </div>
+              <button type="button" onclick="window.wayones.closeModal()" class="w-9 h-9 rounded-xl bg-panel text-muted flex items-center justify-center">✕</button>
+            </div>
+
+            <form onsubmit="window.wayones.submitPostOffer(event)" class="space-y-3.5">
+              <div class="grid grid-cols-2 gap-2.5">
+                <div>
+                  <label class="block text-xs font-semibold text-crisp mb-1">Offer Type</label>
+                  <select id="po-side" class="w-full h-11 px-3 rounded-xl bg-panel border border-borderc text-sm font-bold text-crisp">
+                    <option value="SELL">I want to SELL Crypto</option>
+                    <option value="BUY">I want to BUY Crypto</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="block text-xs font-semibold text-crisp mb-1">Cryptocurrency</label>
+                  <select id="po-crypto" class="w-full h-11 px-3 rounded-xl bg-panel border border-borderc text-sm font-bold text-crisp">
+                    ${Object.keys(COINS).map(k => `<option value="${k}" ${k === state.market.crypto ? "selected" : ""}>${k} — ${COINS[k].name}</option>`).join("")}
+                  </select>
+                </div>
+              </div>
+
+              <div class="grid grid-cols-2 gap-2.5">
+                <div>
+                  <label class="block text-xs font-semibold text-crisp mb-1">Unit Price (${f.code})</label>
+                  <input id="po-price" type="number" step="any" required value="${defPrice}" class="w-full h-11 px-3 rounded-xl bg-panel border border-borderc text-sm font-bold text-crisp tabular-nums" />
+                </div>
+                <div>
+                  <label class="block text-xs font-semibold text-crisp mb-1">Available Crypto</label>
+                  <input id="po-avail" type="number" step="any" required value="${["USDT","USDC","TRX"].includes(c.symbol) ? 1000 : 1}" class="w-full h-11 px-3 rounded-xl bg-panel border border-borderc text-sm font-bold text-crisp tabular-nums" />
+                </div>
+              </div>
+
+              <div class="grid grid-cols-2 gap-2.5">
+                <div>
+                  <label class="block text-xs font-semibold text-crisp mb-1">Min Limit (${f.code})</label>
+                  <input id="po-min" type="number" step="any" required value="${defMin}" class="w-full h-11 px-3 rounded-xl bg-panel border border-borderc text-sm font-bold text-crisp tabular-nums" />
+                </div>
+                <div>
+                  <label class="block text-xs font-semibold text-crisp mb-1">Max Limit (${f.code})</label>
+                  <input id="po-max" type="number" step="any" required value="${defMax}" class="w-full h-11 px-3 rounded-xl bg-panel border border-borderc text-sm font-bold text-crisp tabular-nums" />
+                </div>
+              </div>
+
+              <div class="grid grid-cols-2 gap-2.5">
+                <div>
+                  <label class="block text-xs font-semibold text-crisp mb-1">Payment Method</label>
+                  <select id="po-method" class="w-full h-11 px-3 rounded-xl bg-panel border border-borderc text-sm font-bold text-crisp">
+                    ${f.methods.map(pm => `<option value="${esc(pm)}">${esc(pm)}</option>`).join("")}
+                  </select>
+                </div>
+                <div>
+                  <label class="block text-xs font-semibold text-crisp mb-1">Payment Window</label>
+                  <select id="po-window" class="w-full h-11 px-3 rounded-xl bg-panel border border-borderc text-sm font-bold text-crisp">
+                    <option value="15">15 Minutes</option>
+                    <option value="20">20 Minutes</option>
+                    <option value="30">30 Minutes</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label class="block text-xs font-semibold text-crisp mb-1">Public Trade Terms</label>
+                <textarea id="po-terms" rows="2" required class="w-full p-3 rounded-xl bg-panel border border-borderc focus:border-mint focus:outline-none text-xs sm:text-sm text-crisp">Own verified bank/wallet account only. Fast escrow release once payment clears.</textarea>
+              </div>
+
+              <div>
+                <label class="block text-xs font-semibold text-crisp mb-1">Private Payment Instructions (Shown inside Escrow Room)</label>
+                <textarea id="po-instr" rows="2" required placeholder="Enter UPI ID, Bank Account, Zelle, PIX, or payment steps..." class="w-full p-3 rounded-xl bg-panel border border-borderc focus:border-mint focus:outline-none text-xs sm:text-sm font-mono text-crisp"></textarea>
+              </div>
+
+              <button type="submit" class="w-full h-12 rounded-2xl bg-mint hover:bg-mint-hover text-[#051B12] font-extrabold text-sm shadow-mint">Publish Offer Live</button>
+            </form>
+          </div>
+        </div>
+      `);
+    }
+
+    async function submitPostOffer(e) {
+      e.preventDefault();
+      if (!state.user) { openAuthModal(); return; }
+
+      const side = document.getElementById("po-side").value;
+      const crypto = document.getElementById("po-crypto").value;
+      const price = parseFloat(document.getElementById("po-price").value);
+      const availableCrypto = parseFloat(document.getElementById("po-avail").value);
+      const minLimit = parseFloat(document.getElementById("po-min").value);
+      const maxLimit = parseFloat(document.getElementById("po-max").value);
+      const paymentMethod = document.getElementById("po-method").value;
+      const paymentWindow = parseInt(document.getElementById("po-window").value, 10) || 15;
+      const terms = document.getElementById("po-terms").value.trim();
+      const paymentInstructions = document.getElementById("po-instr").value.trim();
+
+      if (isNaN(price) || price <= 0 || isNaN(minLimit) || isNaN(maxLimit) || maxLimit < minLimit || isNaN(availableCrypto) || availableCrypto <= 0) {
+        toast("Please enter valid limits and positive numbers.", "error");
+        return;
+      }
+
+      const offerId = makeId("OFF");
+      const newOffer = {
+        id: offerId,
+        creatorUid: state.user.uid,
+        traderName: state.user.name,
+        verified: state.user.kycStatus === "verified",
+        online: true,
+        completion: 100.0,
+        tradeCount: Math.max(1, state.trades.filter(t => t.status === "released").length),
+        responseTime: "~1 min",
+        avatarAccent: "#00D084",
+        side,
+        crypto,
+        network: COINS[crypto].defaultNet,
+        fiat: state.fiat,
+        price,
+        minLimit,
+        maxLimit,
+        availableCrypto,
+        paymentMethods: [paymentMethod],
+        paymentWindow,
+        terms,
+        paymentInstructions,
+        isActive: true,
+        createdAt: Date.now()
+      };
+
+      state.customOffers.unshift(newOffer);
+      saveSharedMirror(true);
+
+      if (db) {
+        try {
+          await setDoc(doc(db, "offers", offerId), newOffer);
+        } catch (err) {
+          console.warn("Firestore offer write fallback:", err?.code || err?.message);
+        }
+      }
+
+      state.market.crypto = crypto;
+      state.market.action = side === "SELL" ? "BUY" : "SELL";
+      closeModal();
+      renderAll();
+      toast(`Offer ${offerId} published live to Wayones Marketplace!`, "success");
+    }
+
+    function openCreateTradeModal(offerId) {
+      const offer = getVisibleOffers().find(o => o.id === offerId) || state.customOffers.find(o => o.id === offerId);
+      if (!offer) return;
+      if (!state.user) {
+        toast("Sign in with Google to start an escrow-protected P2P trade.", "info");
+        openAuthModal();
+        return;
+      }
+
+      activeOfferForTrade = offer;
+      const isBuying = offer.side === "SELL";
+      const defFiat = Math.min(offer.maxLimit, Math.max(offer.minLimit, offer.minLimit * 2));
+      const defCrypto = defFiat / offer.price;
+      const fMeta = getFiat(offer.fiat);
+
+      openModal(`
+        <div class="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/80 backdrop-blur-sm" onclick="window.wayones.backdropClose(event)">
+          <div class="anim-in w-full sm:max-w-lg max-h-[92vh] overflow-y-auto bg-card border-t sm:border border-borderc rounded-t-3xl sm:rounded-3xl p-5 sm:p-6 space-y-4 shadow-2xl" onclick="event.stopPropagation()">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-2.5">
+                ${cryptoLogoSvg(offer.crypto, 30)}
+                <div>
+                  <h3 class="text-base font-extrabold text-crisp">${isBuying ? "Buy" : "Sell"} ${offer.crypto} with ${esc(offer.traderName)}</h3>
+                  <p class="text-xs text-muted">Price: <strong class="text-mint">${fmtFiat(offer.price, offer.fiat)}</strong> / 1 ${offer.crypto}</p>
+                </div>
+              </div>
+              <button type="button" onclick="window.wayones.closeModal()" class="w-9 h-9 rounded-xl bg-panel text-muted flex items-center justify-center">✕</button>
+            </div>
+
+            <div class="bg-panel border border-borderc rounded-2xl p-3.5 grid grid-cols-2 gap-3 text-xs">
+              <div>
+                <div class="text-muted">Order Limits</div>
+                <div class="font-extrabold text-crisp tabular-nums mt-0.5">${fmtFiat(offer.minLimit, offer.fiat)} – ${fmtFiat(offer.maxLimit, offer.fiat)}</div>
+              </div>
+              <div class="text-right">
+                <div class="text-muted">Payment Window</div>
+                <div class="font-extrabold text-mint mt-0.5">${offer.paymentWindow || 15} Minutes</div>
+              </div>
+            </div>
+
+            <form onsubmit="window.wayones.confirmTradeCreation(event)" class="space-y-3.5">
+              <div>
+                <div class="flex items-center justify-between mb-1">
+                  <label class="text-xs font-semibold text-crisp">${isBuying ? "I will pay" : "I will receive"} (${fMeta.code})</label>
+                  <div class="flex gap-1.5">
+                    <button type="button" onclick="window.wayones.fillTradeFiat(${offer.minLimit})" class="px-2 py-0.5 rounded bg-panel border border-borderc text-[11px] font-bold text-muted">Min</button>
+                    <button type="button" onclick="window.wayones.fillTradeFiat(${offer.maxLimit})" class="px-2 py-0.5 rounded bg-panel border border-borderc text-[11px] font-bold text-muted">Max</button>
+                  </div>
+                </div>
+                <div class="relative flex items-center">
+                  <span class="absolute left-3.5 text-mint font-bold">${fMeta.symbol}</span>
+                  <input id="ct-fiat" type="number" step="any" required value="${defFiat.toFixed(2)}" oninput="window.wayones.syncTradeFiat()" class="w-full h-11 pl-9 pr-14 rounded-xl bg-panel border border-borderc focus:border-mint focus:outline-none text-base font-bold text-crisp tabular-nums" />
+                  <span class="absolute right-3.5 text-xs font-bold text-muted">${fMeta.code}</span>
+                </div>
+              </div>
+
+              <div>
+                <label class="block text-xs font-semibold text-crisp mb-1">${isBuying ? "I will receive" : "Escrow lock amount"} (${offer.crypto})</label>
+                <div class="relative flex items-center">
+                  <input id="ct-crypto" type="number" step="any" required value="${fmtCrypto(defCrypto, offer.crypto)}" oninput="window.wayones.syncTradeCrypto()" class="w-full h-11 pl-3.5 pr-16 rounded-xl bg-panel border border-borderc focus:border-mint focus:outline-none text-base font-bold text-crisp tabular-nums" />
+                  <span class="absolute right-3.5 text-xs font-bold text-mint">${offer.crypto}</span>
+                </div>
+              </div>
+
+              <div class="bg-obsidian border border-mint/30 rounded-2xl p-3.5 space-y-1.5">
+                <div class="text-[11px] font-extrabold uppercase tracking-wider text-mint">Frozen Offer Terms</div>
+                <p class="text-xs text-crisp/85 leading-relaxed">${esc(offer.terms)}</p>
+              </div>
+
+              <div id="ct-err" class="hidden p-3 rounded-xl bg-coral/15 border border-coral/40 text-xs font-semibold text-red-200"></div>
+
+              <button type="submit" class="w-full h-12 rounded-2xl ${isBuying ? "bg-mint hover:bg-mint-hover text-[#051B12] shadow-mint" : "bg-coral hover:bg-red-500 text-white"} font-extrabold text-sm transition-all">
+                Start Escrow Trade
+              </button>
+            </form>
+          </div>
+        </div>
+      `);
+    }
+
+    async function confirmTradeCreation(e) {
+      e.preventDefault();
+      if (!activeOfferForTrade || !state.user) return;
+      const o = activeOfferForTrade;
+      const isBuying = o.side === "SELL";
+      const fiatAmt = parseFloat(document.getElementById("ct-fiat").value);
+      const cryptoAmt = parseFloat(document.getElementById("ct-crypto").value);
+      const errEl = document.getElementById("ct-err");
+
+      if (isNaN(fiatAmt) || fiatAmt < o.minLimit - 0.01 || fiatAmt > o.maxLimit + 0.01) {
+        if (errEl) {
+          errEl.textContent = `Amount must be between ${fmtFiat(o.minLimit, o.fiat)} and ${fmtFiat(o.maxLimit, o.fiat)}.`;
+          errEl.classList.remove("hidden");
+        }
+        return;
+      }
+
+      if (!isBuying) {
+        const myBal = Number(state.wallet.balances[o.crypto] || 0);
+        if (cryptoAmt > myBal) {
+          if (errEl) {
+            errEl.textContent = `Insufficient ${o.crypto} wallet balance (${fmtCrypto(myBal, o.crypto)}). Claim +500 tUSDT Faucet in Wallet tab to test selling!`;
+            errEl.classList.remove("hidden");
+          }
+          return;
+        }
+        state.wallet.balances[o.crypto] = Number((myBal - cryptoAmt).toFixed(8));
+        state.wallet.locked[o.crypto] = Number(((state.wallet.locked[o.crypto] || 0) + cryptoAmt).toFixed(8));
+        state.wallet.transactions.unshift({
+          id: makeId("TX"),
+          type: "escrow_lock",
+          crypto: o.crypto,
+          amount: cryptoAmt,
+          note: `Locked in P2P Sell Escrow`,
+          createdAt: Date.now()
+        });
+        saveLocalWallet();
+      }
+
+      const tradeId = makeId("TRD");
+      const now = Date.now();
+      const termsHash = await computeHash(`${tradeId}|${o.terms}|${o.price}|${fiatAmt}`);
+      const methodLabel = Array.isArray(o.paymentMethods) ? o.paymentMethods[0] : (o.paymentMethod || getFiat(o.fiat).methods[0]);
+
+      const newTrade = {
+        id: tradeId,
+        offerId: o.id,
+        userRole: isBuying ? "BUYER" : "SELLER",
+        buyerUid: isBuying ? state.user.uid : o.creatorUid,
+        buyerName: isBuying ? state.user.name : o.traderName,
+        sellerUid: isBuying ? o.creatorUid : state.user.uid,
+        sellerName: isBuying ? o.traderName : state.user.name,
+        crypto: o.crypto,
+        network: o.network || COINS[o.crypto].defaultNet,
+        fiat: o.fiat,
+        fiatAmount: Number(fiatAmt.toFixed(2)),
+        cryptoAmount: Number(cryptoAmt.toFixed(COINS[o.crypto].decimals)),
+        unitPrice: o.price,
+        paymentMethod: methodLabel,
+        paymentInstructions: o.paymentInstructions,
+        frozenTerms: o.terms,
+        termsHash,
+        utrReference: "",
+        status: "escrow_locked", // 'escrow_locked' | 'paid' | 'released' | 'disputed' | 'cancelled'
+        dispute: null,
+        messages: [
+          {
+            id: makeId("MSG"),
+            senderRole: "system",
+            senderName: "Wayones Escrow",
+            text: `Escrow Vault Locked: ${fmtCrypto(cryptoAmt, o.crypto)} ${o.crypto} is safely held in non-custodial escrow. Frozen Terms Hash: ${termsHash.slice(0, 18)}...`,
+            createdAt: now
+          }
+        ],
+        createdAt: now,
+        expiresAt: now + (o.paymentWindow || 15) * 60 * 1000
+      };
+
+      state.trades.unshift(newTrade);
+      state.openTradeId = tradeId;
+      saveSharedMirror(true);
+
+      if (db) {
+        try {
+          await setDoc(doc(db, "trades", tradeId), newTrade);
+        } catch (err) {
+          console.warn("Firestore trade write fallback:", err?.code || err?.message);
+        }
+      }
+
+      closeModal();
+      state.tab = "trades";
+      renderAll();
+      startTradeCountdown(tradeId);
+      toast(`Escrow Trade ${tradeId} started!`, "success");
+    }
+
+    /* =========================================================================
+       10. TAB 2: TRADES & FULL ESCROW TRADE ROOM (3-STEP BAR, CHAT, DISPUTE)
+       ========================================================================= */
+    function stopTradeCountdown() {
+      if (countdownInterval) { clearInterval(countdownInterval); countdownInterval = null; }
+    }
+
+    function startTradeCountdown(tradeId) {
+      stopTradeCountdown();
+      countdownInterval = setInterval(() => {
+        const t = state.trades.find(x => x.id === tradeId);
+        const el = document.getElementById("trade-room-timer");
+        if (!t || !el || ["released", "cancelled"].includes(t.status)) {
+          stopTradeCountdown();
+          return;
+        }
+        const rem = Math.max(0, (t.expiresAt || Date.now()) - Date.now());
+        const m = String(Math.floor(rem / 60000)).padStart(2, "0");
+        const s = String(Math.floor((rem % 60000) / 1000)).padStart(2, "0");
+        el.textContent = `${m}:${s}`;
+      }, 1000);
+    }
+
+    function tradeStatusPill(status) {
+      const map = {
+        escrow_locked: { cls: "bg-amberc/15 border-amberc/40 text-amber-300", label: "Escrow Locked" },
+        paid:          { cls: "bg-tealc/20 border-tealc/45 text-tealc", label: "Payment Sent" },
+        released:      { cls: "bg-mint/15 border-mint/45 text-mint", label: "Released" },
+        disputed:      { cls: "bg-coral/20 border-coral/45 text-red-300", label: "Disputed" },
+        cancelled:     { cls: "bg-panel border-borderc text-muted", label: "Cancelled" }
+      };
+      const meta = map[status] || map.escrow_locked;
+      return `<span class="px-2.5 py-0.5 rounded-full border text-[10px] font-extrabold uppercase tracking-wide ${meta.cls}">${meta.label}</span>`;
+    }
+
+    function renderEscrowProgressBar(status) {
+      const s1Done = true;
+      const s2Done = ["paid", "released", "disputed"].includes(status);
+      const s3Done = status === "released";
+      const isDisputed = status === "disputed";
+      const isCancelled = status === "cancelled";
+
+      const node = (num, title, done, alert = false) => `
+        <div class="flex flex-col sm:flex-row items-center gap-1.5 text-center sm:text-left">
+          <div class="w-6 h-6 rounded-full text-[11px] font-extrabold flex items-center justify-center shrink-0 ${
+            alert ? "bg-coral text-white" : done ? "bg-mint text-[#051B12]" : "bg-panel border border-borderc text-muted"
+          }">${alert ? "!" : done ? "✓" : num}</div>
+          <span class="text-[11px] font-bold leading-tight ${alert ? "text-red-300" : done ? "text-crisp" : "text-muted"}">${title}</span>
+        </div>
+      `;
+
+      return `
+        <div class="bg-obsidian border border-borderc rounded-2xl p-3.5 flex items-center justify-between gap-2">
+          ${node(1, "Crypto Locked", s1Done)}
+          <div class="flex-1 h-1 rounded-full ${s2Done ? "bg-mint" : "bg-borderc"}"></div>
+          ${node(2, isDisputed ? "Disputed" : "Fiat Marked Paid", s2Done, isDisputed)}
+          <div class="flex-1 h-1 rounded-full ${s3Done ? "bg-mint" : "bg-borderc"}"></div>
+          ${node(3, isCancelled ? "Cancelled" : "Crypto Released", s3Done, isCancelled)}
+        </div>
+      `;
+    }
+
+    function renderTradeRoom(t) {
+      const rem = Math.max(0, (t.expiresAt || Date.now()) - Date.now());
+      const mm = String(Math.floor(rem / 60000)).padStart(2, "0");
+      const ss = String(Math.floor((rem % 60000) / 1000)).padStart(2, "0");
+      const isFinal = ["released", "cancelled"].includes(t.status);
+      const isBuyer = t.userRole === "BUYER";
+
+      let actionPanel = "";
+      if (t.status === "escrow_locked") {
+        actionPanel = isBuyer
+          ? `
+            <form onsubmit="window.wayones.markAsPaid(event, '${t.id}')" class="bg-panel border border-borderc rounded-2xl p-4 space-y-3">
+              <div class="text-xs font-extrabold text-crisp">Step 2: Transfer ${fmtFiat(t.fiatAmount, t.fiat)} & Confirm Payment</div>
+              <input id="tr-utr-inp" type="text" required minlength="4" placeholder="Enter Bank UTR / Transaction Reference ID" class="w-full h-11 px-3.5 rounded-xl bg-obsidian border border-borderc focus:border-mint focus:outline-none font-mono text-sm text-crisp" />
+              <div class="flex flex-wrap gap-2">
+                <button type="submit" class="flex-1 h-11 px-4 rounded-xl bg-mint hover:bg-mint-hover text-[#051B12] font-extrabold text-xs shadow-mint">Mark as Paid</button>
+                <button type="button" onclick="window.wayones.cancelTrade('${t.id}')" class="h-11 px-4 rounded-xl bg-obsidian border border-borderc text-red-300 font-bold text-xs">Cancel Trade</button>
+              </div>
+            </form>
+          `
+          : `
+            <div class="bg-panel border border-borderc rounded-2xl p-4 space-y-3">
+              <div class="text-xs text-amber-200 leading-relaxed">
+                <strong>${fmtCrypto(t.cryptoAmount, t.crypto)} ${t.crypto}</strong> is locked in escrow. Once <strong>${esc(t.buyerName)}</strong> transfers <strong>${fmtFiat(t.fiatAmount, t.fiat)}</strong> to your account, release escrow below.
+              </div>
+              <div class="flex flex-wrap gap-2">
+                <button type="button" onclick="window.wayones.releaseEscrow('${t.id}')" class="flex-1 h-11 px-4 rounded-xl bg-mint hover:bg-mint-hover text-[#051B12] font-extrabold text-xs shadow-mint">Confirm Receipt & Release Escrow</button>
+                <button type="button" onclick="window.wayones.openDisputeModal('${t.id}')" class="h-11 px-4 rounded-xl bg-coral/15 border border-coral/40 text-red-200 font-bold text-xs">Open Dispute</button>
+              </div>
+            </div>
+          `;
+      } else if (t.status === "paid") {
+        actionPanel = `
+          <div class="bg-panel border border-tealc/40 rounded-2xl p-4 space-y-3">
+            <div class="text-xs text-teal-100">
+              Fiat Marked Paid • UTR / Ref: <strong class="font-mono text-crisp">${esc(t.utrReference || "Submitted")}</strong>
+            </div>
+            <div class="flex flex-wrap gap-2">
+              ${!isBuyer
+                ? `<button type="button" onclick="window.wayones.releaseEscrow('${t.id}')" class="flex-1 h-11 px-4 rounded-xl bg-mint hover:bg-mint-hover text-[#051B12] font-extrabold text-xs shadow-mint">Release Escrow</button>`
+                : `<div class="flex-1 p-3 rounded-xl bg-obsidian border border-borderc text-xs text-muted">Waiting for ${esc(t.sellerName)} to verify credit and release ${t.crypto}...</div>`
+              }
+              <button type="button" onclick="window.wayones.openDisputeModal('${t.id}')" class="h-11 px-4 rounded-xl bg-coral/15 hover:bg-coral border border-coral/45 text-red-200 hover:text-white font-extrabold text-xs transition-colors">Open Dispute</button>
+            </div>
+          </div>
+        `;
+      } else if (t.status === "disputed") {
+        actionPanel = `
+          <div class="bg-coral/15 border border-coral/45 rounded-2xl p-4 space-y-1.5 text-xs">
+            <div class="font-extrabold text-red-300 uppercase">Escrow Frozen — Under Wayones Arbitration</div>
+            <div class="text-crisp">Reason: <strong>${esc(t.dispute?.reason || "Dispute Opened")}</strong></div>
+            <p class="text-muted leading-relaxed">Dispute evidence & payment proof have been synced live to the Wayones Arbitration Desk.</p>
+          </div>
+        `;
+      } else if (t.status === "released") {
+        actionPanel = `
+          <div class="bg-mint/15 border border-mint/45 rounded-2xl p-4 text-xs">
+            <div class="text-sm font-extrabold text-mint">✓ Escrow Released — Trade Completed</div>
+            <p class="text-emerald-100 mt-1">${fmtCrypto(t.cryptoAmount, t.crypto)} ${t.crypto} has been settled successfully.</p>
+          </div>
+        `;
+      } else {
+        actionPanel = `
+          <div class="bg-panel border border-borderc rounded-2xl p-4 text-xs text-muted">
+            <strong class="text-crisp">Trade Cancelled</strong> — Zero escrow fees charged.
+          </div>
+        `;
+      }
+
+      return `
+        <div class="space-y-4">
+          <div class="flex items-center justify-between gap-2 flex-wrap">
+            <button type="button" onclick="window.wayones.closeTradeRoom()" class="h-9 px-3.5 rounded-xl bg-card border border-borderc hover:border-mint/50 text-xs font-bold text-crisp flex items-center gap-1.5">
+              ← All Trades
+            </button>
+            <div class="flex items-center gap-2">
+              ${tradeStatusPill(t.status)}
+              ${!isFinal ? `<span class="px-3 py-1 rounded-xl bg-card border border-mint/40 text-xs font-extrabold text-mint tabular-nums">⏱ <span id="trade-room-timer">${mm}:${ss}</span></span>` : ""}
+            </div>
+          </div>
+
+          ${renderEscrowProgressBar(t.status)}
+
+          <div class="grid grid-cols-1 lg:grid-cols-12 gap-5">
+            <!-- Left Column: Order Summary, Seller Payment Instructions & Actions -->
+            <div class="lg:col-span-6 space-y-4">
+              <div class="bg-card border border-borderc rounded-2xl p-4 space-y-2.5 text-xs">
+                <div class="flex items-center justify-between pb-2.5 border-b border-borderc">
+                  <div class="flex items-center gap-2">
+                    ${cryptoLogoSvg(t.crypto, 26)}
+                    <div>
+                      <div class="font-extrabold text-crisp text-sm">${isBuyer ? "Buying" : "Selling"} ${fmtCrypto(t.cryptoAmount, t.crypto)} ${t.crypto}</div>
+                      <div class="text-[11px] text-muted">Order ${esc(t.id)}</div>
+                    </div>
+                  </div>
+                  <div class="text-right">
+                    <div class="text-[11px] text-muted">Fiat Total</div>
+                    <div class="text-base font-extrabold text-mint tabular-nums">${fmtFiat(t.fiatAmount, t.fiat)}</div>
+                  </div>
+                </div>
+                <div class="flex justify-between"><span class="text-muted">Counterparty</span><strong class="text-crisp">${esc(isBuyer ? t.sellerName : t.buyerName)}</strong></div>
+                <div class="flex justify-between"><span class="text-muted">Unit Price</span><strong class="text-crisp tabular-nums">${fmtFiat(t.unitPrice, t.fiat)}</strong></div>
+                <div class="flex justify-between"><span class="text-muted">Payment Rail / Network</span><strong class="text-crisp">${esc(t.paymentMethod)} • ${esc(t.network)}</strong></div>
+              </div>
+
+              <!-- Seller Payment Instructions -->
+              <div class="bg-card border border-borderc rounded-2xl p-4 space-y-2">
+                <div class="flex items-center justify-between">
+                  <span class="text-[11px] font-extrabold uppercase tracking-wider text-mint">Seller Payment Instructions</span>
+                  <button type="button" onclick="window.wayones.copy('${esc(t.paymentInstructions)}', 'Payment details copied!')" class="px-2.5 py-1 rounded-lg bg-mint/15 hover:bg-mint text-mint hover:text-[#051B12] text-[11px] font-bold transition-colors">Copy</button>
+                </div>
+                <div class="p-3 rounded-xl bg-obsidian border border-borderc font-mono text-xs text-crisp break-words leading-relaxed">
+                  ${esc(t.paymentInstructions)}
+                </div>
+              </div>
+
+              <!-- Frozen Trade Terms + Cryptographic Hash Badge -->
+              <div class="bg-card border border-borderc rounded-2xl p-4 space-y-2">
+                <div class="flex items-center justify-between gap-2 flex-wrap">
+                  <span class="text-[11px] font-extrabold uppercase tracking-wider text-muted">Frozen Trade Terms</span>
+                  <span class="px-2 py-0.5 rounded-md bg-mint/12 border border-mint/30 font-mono text-[10px] text-mint" title="${esc(t.termsHash)}">🔒 Hash ${esc((t.termsHash || "").slice(0, 14))}…</span>
+                </div>
+                <p class="text-xs text-crisp/85 leading-relaxed">${esc(t.frozenTerms)}</p>
+              </div>
+
+              ${actionPanel}
+            </div>
+
+            <!-- Right Column: Live Escrow Trade Chat -->
+            <div class="lg:col-span-6 bg-card border border-borderc rounded-2xl overflow-hidden flex flex-col h-[420px] lg:h-[540px]">
+              <div class="px-4 py-3 bg-panel border-b border-borderc flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                  <span class="w-2 h-2 rounded-full bg-mint animate-pulse"></span>
+                  <span class="text-xs font-extrabold text-crisp">Escrow Trade Chat</span>
+                </div>
+                <span class="text-[10px] text-muted">Synced to Firestore</span>
+              </div>
+
+              <div id="trade-chat-list" class="flex-1 overflow-y-auto p-3.5 space-y-2.5">
+                ${(t.messages || []).map(msg => {
+                  if (msg.senderRole === "system") {
+                    return `<div class="flex justify-center"><div class="px-3 py-1.5 rounded-xl bg-mint/12 border border-mint/30 text-[11px] text-crisp/90 text-center max-w-[94%]">${esc(msg.text)}</div></div>`;
+                  }
+                  if (msg.senderRole === "admin") {
+                    return `<div class="flex justify-center"><div class="px-3 py-2 rounded-xl bg-amberc/15 border border-amberc/45 text-xs text-amber-200 font-semibold text-center max-w-[94%]">⚖️ Wayones Arbitrator: ${esc(msg.text)}</div></div>`;
+                  }
+                  const mine = msg.senderUid && state.user && msg.senderUid === state.user.uid;
+                  return `
+                    <div class="flex flex-col ${mine ? "items-end" : "items-start"}">
+                      <div class="px-3.5 py-2 rounded-2xl text-xs sm:text-sm max-w-[85%] leading-relaxed ${
+                        mine ? "bg-mint text-[#051B12] font-semibold rounded-br-sm" : "bg-panel border border-borderc text-crisp rounded-bl-sm"
+                      }">${esc(msg.text)}</div>
+                      <span class="text-[10px] text-muted mt-1 px-1">${esc(msg.senderName)} • ${timeAgo(msg.createdAt)}</span>
+                    </div>
+                  `;
+                }).join("")}
+              </div>
+
+              <form onsubmit="window.wayones.sendTradeChat(event, '${t.id}')" class="p-2.5 bg-panel border-t border-borderc flex items-center gap-2">
+                <input id="trade-chat-inp" type="text" autocomplete="off" placeholder="Message counterparty or share UTR..." class="flex-1 h-10 px-3.5 rounded-xl bg-obsidian border border-borderc focus:border-mint focus:outline-none text-xs sm:text-sm text-crisp" />
+                <button type="submit" class="h-10 px-4 rounded-xl bg-mint text-[#051B12] font-extrabold text-xs shrink-0">Send</button>
+              </form>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderTradesTab() {
+      if (state.openTradeId) {
+        const current = state.trades.find(t => t.id === state.openTradeId);
+        if (current) return renderTradeRoom(current);
+        state.openTradeId = null;
+      }
+
+      const activeList = state.trades.filter(t => ["escrow_locked", "paid", "disputed"].includes(t.status));
+      const completedList = state.trades.filter(t => ["released", "cancelled"].includes(t.status));
+      const showingActive = state.tradesFilter === "active";
+      const list = showingActive ? activeList : completedList;
+
+      return `
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
+          <div>
+            <h1 class="text-xl sm:text-2xl font-extrabold text-crisp">Escrow Trades</h1>
+            <p class="text-xs sm:text-sm text-muted mt-0.5">Manage active escrows, mark fiat payments, chat live, or request arbitration.</p>
+          </div>
+          <div class="grid grid-cols-2 p-1 rounded-xl bg-card border border-borderc sm:w-64">
+            <button type="button" onclick="window.wayones.setTradesFilter('active')" class="h-9 rounded-lg text-xs font-bold ${showingActive ? "bg-mint text-[#051B12]" : "text-muted"}">Active (${activeList.length})</button>
+            <button type="button" onclick="window.wayones.setTradesFilter('completed')" class="h-9 rounded-lg text-xs font-bold ${!showingActive ? "bg-mint text-[#051B12]" : "text-muted"}">Completed (${completedList.length})</button>
+          </div>
+        </div>
+
+        ${!list.length ? `
+          <div class="bg-card border border-borderc rounded-3xl p-10 text-center space-y-3">
+            <div class="w-12 h-12 mx-auto rounded-2xl bg-mint/12 border border-mint/30 flex items-center justify-center text-mint text-xl">⇄</div>
+            <h3 class="text-base font-extrabold text-crisp">${showingActive ? "No Active Escrow Trades" : "No Completed Trades Yet"}</h3>
+            <p class="text-xs text-muted max-w-sm mx-auto">Choose any verified offer on the P2P Market to initiate a protected escrow order.</p>
+            <button type="button" onclick="window.wayones.setTab('market')" class="h-11 px-5 rounded-xl bg-mint text-[#051B12] font-extrabold text-xs shadow-mint">Browse P2P Market</button>
+          </div>
+        ` : `
+          <div class="flex flex-col gap-3">
+            ${list.map(t => {
+              const isBuy = t.userRole === "BUYER";
+              return `
+                <div onclick="window.wayones.openTradeRoom('${t.id}')" class="cursor-pointer bg-card hover:bg-panel border border-borderc hover:border-mint/50 rounded-2xl p-4 sm:p-5 transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div class="flex items-center gap-3">
+                    ${cryptoLogoSvg(t.crypto, 36)}
+                    <div>
+                      <div class="flex items-center gap-2 flex-wrap">
+                        <span class="px-2 py-0.5 rounded-md text-[10px] font-extrabold ${isBuy ? "bg-mint/15 text-mint" : "bg-coral/15 text-red-300"}">${isBuy ? "BUY" : "SELL"}</span>
+                        <span class="text-base font-extrabold text-crisp tabular-nums">${fmtCrypto(t.cryptoAmount, t.crypto)} ${t.crypto}</span>
+                        ${tradeStatusPill(t.status)}
+                      </div>
+                      <div class="text-xs text-muted mt-1">
+                        Counterparty: <strong class="text-crisp">${esc(isBuy ? t.sellerName : t.buyerName)}</strong> • ${esc(t.paymentMethod)} • ${timeAgo(t.createdAt)}
+                      </div>
+                    </div>
+                  </div>
+                  <div class="flex items-center justify-between sm:flex-col sm:items-end gap-1 pt-2 sm:pt-0 border-t sm:border-t-0 border-borderc">
+                    <div class="text-base font-extrabold text-crisp tabular-nums">${fmtFiat(t.fiatAmount, t.fiat)}</div>
+                    <span class="text-xs font-bold text-mint">Open Trade Room →</span>
+                  </div>
+                </div>
+              `;
+            }).join("")}
+          </div>
+        `}
+      `;
+    }
+
+    async function persistTradeUpdate(t) {
+      saveSharedMirror(true);
+      if (db) {
+        try {
+          await setDoc(doc(db, "trades", t.id), t, { merge: true });
+        } catch (err) {
+          console.warn("Firestore trade sync fallback:", err?.code || err?.message);
+        }
+      }
+    }
+
+    async function markAsPaid(e, tradeId) {
+      e.preventDefault();
+      const t = state.trades.find(x => x.id === tradeId);
+      if (!t || t.status !== "escrow_locked") return;
+      const utr = (document.getElementById("tr-utr-inp")?.value || "").trim();
+      if (utr.length < 4) { toast("Enter a valid UTR / Transaction Reference.", "error"); return; }
+
+      t.status = "paid";
+      t.utrReference = utr;
+      t.messages = [...(t.messages || []), {
+        id: makeId("MSG"),
+        senderRole: "system",
+        senderName: "Wayones Escrow",
+        text: `Buyer marked payment as sent. Bank Ref / UTR: "${utr}". Awaiting Seller verification.`,
+        createdAt: Date.now()
+      }];
+      await persistTradeUpdate(t);
+      renderAll();
+      toast("Payment marked as Paid! Counterparty notified.", "success");
+    }
+
+    async function releaseEscrow(tradeId) {
+      const t = state.trades.find(x => x.id === tradeId);
+      if (!t || !["escrow_locked", "paid"].includes(t.status)) return;
+
+      t.status = "released";
+      if (t.userRole === "SELLER") {
+        state.wallet.locked[t.crypto] = Math.max(0, Number(((state.wallet.locked[t.crypto] || 0) - t.cryptoAmount).toFixed(8)));
+        state.wallet.transactions.unshift({
+          id: makeId("TX"),
+          type: "escrow_release",
+          crypto: t.crypto,
+          amount: t.cryptoAmount,
+          note: `Released to ${t.buyerName} (${t.id})`,
+          createdAt: Date.now()
+        });
+        saveLocalWallet();
+      } else {
+        state.wallet.balances[t.crypto] = Number(((state.wallet.balances[t.crypto] || 0) + t.cryptoAmount).toFixed(8));
+        saveLocalWallet();
+      }
+
+      t.messages = [...(t.messages || []), {
+        id: makeId("MSG"),
+        senderRole: "system",
+        senderName: "Wayones Escrow",
+        text: `Escrow Released: ${fmtCrypto(t.cryptoAmount, t.crypto)} ${t.crypto} settled successfully.`,
+        createdAt: Date.now()
+      }];
+      await persistTradeUpdate(t);
+      stopTradeCountdown();
+      renderAll();
+      toast(`Released ${fmtCrypto(t.cryptoAmount, t.crypto)} ${t.crypto} from Escrow!`, "success");
+    }
+
+    async function cancelTrade(tradeId) {
+      const t = state.trades.find(x => x.id === tradeId);
+      if (!t || t.status !== "escrow_locked") return;
+      t.status = "cancelled";
+      if (t.userRole === "SELLER") {
+        state.wallet.locked[t.crypto] = Math.max(0, Number(((state.wallet.locked[t.crypto] || 0) - t.cryptoAmount).toFixed(8)));
+        state.wallet.balances[t.crypto] = Number(((state.wallet.balances[t.crypto] || 0) + t.cryptoAmount).toFixed(8));
+        saveLocalWallet();
+      }
+      t.messages = [...(t.messages || []), {
+        id: makeId("MSG"),
+        senderRole: "system",
+        senderName: "Wayones Escrow",
+        text: `Order cancelled cleanly with 0% fee.`,
+        createdAt: Date.now()
+      }];
+      await persistTradeUpdate(t);
+      stopTradeCountdown();
+      renderAll();
+      toast("Trade cancelled with 0% fee.", "info");
+    }
+
+    async function sendTradeChat(e, tradeId) {
+      e.preventDefault();
+      const t = state.trades.find(x => x.id === tradeId);
+      const inp = document.getElementById("trade-chat-inp");
+      const text = (inp?.value || "").trim();
+      if (!t || !text) return;
+      inp.value = "";
+
+      t.messages = [...(t.messages || []), {
+        id: makeId("MSG"),
+        senderRole: "user",
+        senderUid: state.user?.uid || "local",
+        senderName: state.user?.name || "You",
+        text,
+        createdAt: Date.now()
+      }];
+      await persistTradeUpdate(t);
+      renderAll();
+      setTimeout(() => {
+        const feed = document.getElementById("trade-chat-list");
+        if (feed) feed.scrollTop = feed.scrollHeight;
+        document.getElementById("trade-chat-inp")?.focus();
+      }, 20);
+    }
+
+    function openDisputeModal(tradeId) {
+      state.disputeDraft = {
+        tradeId,
+        reason: "Payment sent but seller not releasing crypto",
+        description: "",
+        proofImg: ""
+      };
+      renderDisputeModal();
+    }
+
+    function renderDisputeModal() {
+      const d = state.disputeDraft;
+      openModal(`
+        <div class="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/80 backdrop-blur-sm" onclick="window.wayones.backdropClose(event)">
+          <div class="anim-in w-full sm:max-w-lg max-h-[92vh] overflow-y-auto bg-card border-t sm:border border-coral/50 rounded-t-3xl sm:rounded-3xl p-5 sm:p-6 space-y-4 shadow-2xl" onclick="event.stopPropagation()">
+            <div class="flex items-center justify-between">
+              <div>
+                <span class="px-2 py-0.5 rounded bg-coral text-white text-[10px] font-extrabold uppercase">Escrow Arbitration</span>
+                <h3 class="text-base font-extrabold text-crisp mt-1">Open Trade Dispute</h3>
+              </div>
+              <button type="button" onclick="window.wayones.closeModal()" class="w-9 h-9 rounded-xl bg-panel text-muted flex items-center justify-center">✕</button>
+            </div>
+
+            <form onsubmit="window.wayones.submitDispute(event)" class="space-y-3.5">
+              <div>
+                <label class="block text-xs font-semibold text-crisp mb-1">Dispute Reason *</label>
+                <select id="dsp-reason" onchange="window.wayones.setDisputeField('reason', this.value)" class="w-full h-11 px-3 rounded-xl bg-panel border border-borderc text-sm text-crisp">
+                  <option value="Payment sent but seller not releasing crypto" ${d.reason.includes("releasing") ? "selected" : ""}>Payment sent but seller not releasing crypto</option>
+                  <option value="Payment not received / Fake receipt" ${d.reason.includes("Fake") ? "selected" : ""}>Payment not received / Fake receipt</option>
+                  <option value="Unauthorized third-party bank transfer" ${d.reason.includes("third-party") ? "selected" : ""}>Unauthorized third-party bank transfer</option>
+                  <option value="Incorrect fiat amount transferred" ${d.reason.includes("Incorrect") ? "selected" : ""}>Incorrect fiat amount transferred</option>
+                </select>
+              </div>
+
+              <div>
+                <label class="block text-xs font-semibold text-crisp mb-1">Detailed Description *</label>
+                <textarea id="dsp-desc" rows="3" required minlength="10" oninput="window.wayones.setDisputeField('description', this.value)" placeholder="Explain exact payment time, bank name, and UTR reference..." class="w-full p-3 rounded-xl bg-panel border border-borderc focus:border-mint focus:outline-none text-xs sm:text-sm text-crisp">${esc(d.description)}</textarea>
+              </div>
+
+              <div class="space-y-2">
+                <label class="block text-xs font-semibold text-crisp">Attach Payment Proof Screenshot (Auto-Compressed)</label>
+                ${d.proofImg ? `
+                  <div class="relative rounded-xl overflow-hidden border border-mint/40 bg-obsidian h-36 flex items-center justify-center">
+                    <img src="${d.proofImg}" alt="Payment Proof" class="max-h-full max-w-full object-contain" />
+                    <button type="button" onclick="window.wayones.clearDisputeProof()" class="absolute top-2 right-2 px-2 py-1 rounded-lg bg-coral text-white text-[10px] font-bold">Remove</button>
+                  </div>
+                ` : `
+                  <label class="cursor-pointer flex flex-col items-center justify-center h-28 rounded-xl border-2 border-dashed border-borderc hover:border-mint/60 bg-obsidian/70 p-3 text-center transition-colors">
+                    <span class="text-xs font-bold text-mint">+ Upload Receipt Screenshot</span>
+                    <span class="text-[10px] text-muted mt-0.5">JPG / PNG compressed automatically for fast arbitration</span>
+                    <input type="file" accept="image/*" class="hidden" onchange="window.wayones.handleDisputeProof(event)" />
+                  </label>
+                `}
+              </div>
+
+              <button type="submit" class="w-full h-12 rounded-2xl bg-coral hover:bg-red-500 text-white font-extrabold text-sm">Freeze Escrow & Submit Dispute</button>
+            </form>
+          </div>
+        </div>
+      `);
+    }
+
+    async function handleDisputeProof(e) {
+      const file = e.target.files?.[0];
+      if (!file) return;
+      try {
+        state.disputeDraft.proofImg = await compressImageCanvas(file, 640, 0.60);
+        renderDisputeModal();
+        toast("Payment proof attached!", "success");
+      } catch (err) {
+        toast(err.message, "error");
+      }
+    }
+
+    async function submitDispute(e) {
+      e.preventDefault();
+      const d = state.disputeDraft;
+      const t = state.trades.find(x => x.id === d.tradeId);
+      if (!t) return;
+
+      t.status = "disputed";
+      t.dispute = {
+        reason: d.reason,
+        description: (d.description || "").trim(),
+        proofImg: d.proofImg || "",
+        openedByUid: state.user?.uid || "local",
+        openedByName: state.user?.name || "Trader",
+        openedAt: Date.now()
+      };
+      t.messages = [...(t.messages || []), {
+        id: makeId("MSG"),
+        senderRole: "system",
+        senderName: "Wayones Escrow",
+        text: `DISPUTE OPENED: "${d.reason}". Escrow frozen and escalated to Wayones Arbitration.`,
+        createdAt: Date.now()
+      }];
+
+      await persistTradeUpdate(t);
+      closeModal();
+      renderAll();
+      toast("Dispute submitted & synced to Arbitration Desk.", "warning");
+    }
+
+    /* =========================================================================
+       11. TAB 3: VERIFY ID (COUNTRY-WISE NATIONAL ID KYC + CANVAS COMPRESSION)
+       ========================================================================= */
+    function renderKycBanner(status, rejectReason) {
+      if (status === "verified") {
+        return `
+          <div class="bg-mint/15 border border-mint/45 rounded-3xl p-5 flex items-start gap-3.5">
+            <div class="w-11 h-11 rounded-2xl bg-mint text-[#051B12] flex items-center justify-center font-black text-lg shrink-0 shadow-mint">✓</div>
+            <div>
+              <div class="text-base font-extrabold text-mint">Verified Trader — National ID Approved</div>
+              <p class="text-xs sm:text-sm text-emerald-100/90 mt-0.5 leading-relaxed">
+                Your identity is verified. Your profile displays the Verified badge and unlocks full marketplace limits.
+              </p>
+            </div>
+          </div>
+        `;
+      }
+      if (status === "pending") {
+        return `
+          <div class="bg-amberc/15 border border-amberc/45 rounded-3xl p-5 flex items-start gap-3.5">
+            <div class="w-11 h-11 rounded-2xl bg-amberc/25 border border-amberc/40 text-amber-300 flex items-center justify-center font-extrabold text-lg shrink-0">⏳</div>
+            <div>
+              <div class="text-base font-extrabold text-amber-300">Pending Review</div>
+              <p class="text-xs sm:text-sm text-amber-100/90 mt-0.5 leading-relaxed">
+                Your National ID documents are securely uploaded and under compliance review. This page updates automatically the moment your KYC is approved.
+              </p>
+            </div>
+          </div>
+        `;
+      }
+      if (status === "rejected") {
+        return `
+          <div class="bg-coral/15 border border-coral/45 rounded-3xl p-5 space-y-3">
+            <div class="flex items-start gap-3.5">
+              <div class="w-11 h-11 rounded-2xl bg-coral text-white flex items-center justify-center font-extrabold text-lg shrink-0">!</div>
+              <div>
+                <div class="text-base font-extrabold text-red-300">Verification Rejected</div>
+                <p class="text-xs sm:text-sm text-red-100 mt-1 leading-relaxed">
+                  <strong>Admin Reason:</strong> ${esc(rejectReason || "Document image was blurry or details did not match. Please resubmit clear photos.")}
+                </p>
+              </div>
+            </div>
+            ${!state.kycDraft.resubmitting ? `<button type="button" onclick="window.wayones.startKycResubmit()" class="h-10 px-5 rounded-xl bg-mint text-[#051B12] font-extrabold text-xs shadow-mint">Resubmit National ID</button>` : ""}
+          </div>
+        `;
+      }
+      return `
+        <div class="bg-card border border-borderc rounded-3xl p-5 flex items-center justify-between gap-3 flex-wrap">
+          <div>
+            <span class="px-2.5 py-0.5 rounded-full bg-panel border border-borderc text-[10px] font-extrabold text-muted uppercase">Status: Unverified</span>
+            <h2 class="text-base font-extrabold text-crisp mt-1.5">Complete National ID Verification</h2>
+            <p class="text-xs text-muted mt-0.5">Select your country, upload official ID photos + selfie holding a handwritten "Wayones" note.</p>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderKycTab() {
+      const u = state.user;
+      const status = u ? normalizeKycStatus(u.kycStatus) : "unverified";
+      const d = state.kycDraft;
+      const cMeta = KYC_COUNTRIES[d.country] || KYC_COUNTRIES["India"];
+      const showForm = !u || status === "unverified" || (status === "rejected" && d.resubmitting);
+
+      const uploadSlot = (slotKey, title, subtitle) => {
+        const img = d[slotKey];
+        return `
+          <div class="bg-panel border border-borderc rounded-2xl p-3.5 space-y-2.5">
+            <div class="flex items-center justify-between gap-1">
+              <span class="text-xs font-extrabold text-crisp">${title}</span>
+              ${img ? `<span class="text-[10px] font-bold text-mint">Ready ✓</span>` : `<span class="text-[10px] text-muted">Required</span>`}
+            </div>
+            ${img ? `
+              <div class="relative rounded-xl overflow-hidden border border-mint/45 bg-obsidian h-36 flex items-center justify-center">
+                <img src="${img}" alt="${esc(title)}" class="max-h-full max-w-full object-contain" />
+                <button type="button" onclick="window.wayones.clearKycPhoto('${slotKey}')" class="absolute top-2 right-2 px-2 py-1 rounded-lg bg-coral text-white text-[10px] font-bold">Remove</button>
+              </div>
+            ` : `
+              <label class="cursor-pointer flex flex-col items-center justify-center h-32 rounded-xl border-2 border-dashed border-borderc hover:border-mint/60 bg-obsidian/70 p-3 text-center transition-colors">
+                <svg class="w-6 h-6 text-mint mb-1.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+                <span class="text-xs font-bold text-crisp">Upload Photo</span>
+                <span class="text-[10px] text-muted mt-0.5 leading-tight">${subtitle}</span>
+                <input type="file" accept="image/*" class="hidden" onchange="window.wayones.handleKycPhoto(event, '${slotKey}')" />
+              </label>
+            `}
+          </div>
+        `;
+      };
+
+      return `
+        <div class="max-w-3xl mx-auto space-y-5">
+          <section class="hero-glow border border-borderc rounded-3xl p-5 sm:p-6">
+            <h1 class="text-xl sm:text-2xl font-extrabold text-crisp">Country-Wise National ID Verification</h1>
+            <p class="text-xs sm:text-sm text-muted mt-1">
+              Real-time KYC desk sync. Photos are automatically compressed on-device for fast, encrypted submission.
+            </p>
+          </section>
+
+          ${renderKycBanner(status, u?.kycRejectReason)}
+
+          ${showForm ? `
+            <form onsubmit="window.wayones.submitKyc(event)" class="bg-card border border-borderc rounded-3xl p-5 sm:p-6 space-y-5 shadow-card">
+              ${!u ? `
+                <div class="p-3.5 rounded-2xl bg-mint/12 border border-mint/35 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 text-xs">
+                  <span class="text-emerald-100"><strong>Sign in with Google</strong> is required before submitting your National ID.</span>
+                  <button type="button" onclick="window.wayones.openAuthModal()" class="h-9 px-4 rounded-xl bg-mint text-[#051B12] font-extrabold shrink-0">Sign In</button>
+                </div>
+              ` : ""}
+
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                <div>
+                  <label class="block text-xs font-semibold text-crisp mb-1">Country / Region *</label>
+                  <div class="relative flex items-center">
+                    <span class="absolute left-3 pointer-events-none flex items-center">${fiatFlagSvg(cMeta.flag, 20)}</span>
+                    <select onchange="window.wayones.setKycCountry(this.value)" class="w-full h-11 pl-10 pr-3 rounded-xl bg-panel border border-borderc focus:border-mint focus:outline-none text-sm font-bold text-crisp">
+                      ${Object.keys(KYC_COUNTRIES).map(c => `<option value="${esc(c)}" ${d.country === c ? "selected" : ""}>${esc(c)}</option>`).join("")}
+                    </select>
+                  </div>
+                </div>
+
+                <div>
+                  <label class="block text-xs font-semibold text-crisp mb-1">Official National ID Type *</label>
+                  <select onchange="window.wayones.setKycDocType(this.value)" class="w-full h-11 px-3 rounded-xl bg-panel border border-borderc focus:border-mint focus:outline-none text-sm font-bold text-crisp">
+                    ${cMeta.docs.map(docName => `<option value="${esc(docName)}" ${d.docType === docName ? "selected" : ""}>${esc(docName)}</option>`).join("")}
+                  </select>
+                </div>
+              </div>
+
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
+                <div>
+                  <label class="block text-xs font-semibold text-crisp mb-1">Full Legal Name *</label>
+                  <input type="text" required minlength="3" value="${esc(d.fullName)}" oninput="window.wayones.setKycField('fullName', this.value)" placeholder="Exact name on ID" class="w-full h-11 px-3.5 rounded-xl bg-panel border border-borderc focus:border-mint focus:outline-none text-sm text-crisp" />
+                </div>
+                <div>
+                  <label class="block text-xs font-semibold text-crisp mb-1">Date of Birth *</label>
+                  <input type="date" required value="${esc(d.dob)}" oninput="window.wayones.setKycField('dob', this.value)" class="w-full h-11 px-3.5 rounded-xl bg-panel border border-borderc focus:border-mint focus:outline-none text-sm text-crisp" />
+                </div>
+                <div>
+                  <label class="block text-xs font-semibold text-crisp mb-1">${esc(d.docType)} Number *</label>
+                  <input type="text" required minlength="4" value="${esc(d.docNumber)}" oninput="window.wayones.setKycField('docNumber', this.value)" placeholder="Enter official ID number" class="w-full h-11 px-3.5 rounded-xl bg-panel border border-borderc focus:border-mint focus:outline-none text-sm font-mono text-crisp" />
+                </div>
+              </div>
+
+              <div class="space-y-2.5">
+                <div class="text-xs font-extrabold uppercase tracking-wider text-muted">Upload Document & Selfie Photos (Max 640px Compressed JPEG)</div>
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  ${uploadSlot("frontImg", "1. ID Front Photo *", "Clear front side, all 4 corners visible")}
+                  ${uploadSlot("backImg", "2. ID Back Photo *", "Back side with barcode / address")}
+                  ${uploadSlot("selfieImg", "3. Selfie + ID Note *", "Hold ID + handwritten \"Wayones\" note")}
+                </div>
+              </div>
+
+              <button type="submit" ${d.submitting ? "disabled" : ""} class="w-full h-12 rounded-2xl bg-mint hover:bg-mint-hover text-[#051B12] font-extrabold text-sm shadow-mint flex items-center justify-center gap-2 transition-all ${d.submitting ? "opacity-70 cursor-not-allowed" : ""}">
+                ${d.submitting ? `<span class="w-4 h-4 rounded-full border-2 border-[#051B12] border-t-transparent animate-spin"></span><span>Uploading Verification...</span>` : `<span>Submit National ID for Verification</span>`}
+              </button>
+            </form>
+          ` : ""}
+        </div>
+      `;
+    }
+
+    async function handleKycPhoto(e, slotKey) {
+      const file = e.target.files?.[0];
+      if (!file) return;
+      try {
+        const compressed = await compressImageCanvas(file, 640, 0.60);
+        state.kycDraft[slotKey] = compressed;
+        renderAll();
+        toast("Photo compressed & attached!", "success");
+      } catch (err) {
+        toast(err.message || "Could not compress image.", "error");
+      }
+    }
+
+    async function submitKyc(e) {
+      e.preventDefault();
+      if (!state.user) {
+        toast("Please sign in with Google before submitting KYC.", "info");
+        openAuthModal();
+        return;
+      }
+      const d = state.kycDraft;
+      if (!d.frontImg || !d.backImg || !d.selfieImg) {
+        toast("Please attach all 3 photos: ID Front, ID Back, and Selfie holding ID + \"Wayones\" note.", "error");
+        return;
+      }
+
+      d.submitting = true;
+      renderAll();
+
+      const submission = {
+        id: makeId("KYC"),
+        uid: state.user.uid,
+        userId: state.user.uid,
+        name: state.user.name,
+        email: state.user.email,
+        photoURL: state.user.photoURL,
+        country: d.country,
+        docType: d.docType,
+        fullName: d.fullName.trim(),
+        dob: d.dob,
+        docNumber: d.docNumber.trim(),
+        frontImg: d.frontImg,
+        backImg: d.backImg,
+        selfieImg: d.selfieImg,
+        status: "pending",
+        rejectionReason: "",
+        submittedAt: Date.now()
+      };
+
+      state.user.kycStatus = "pending";
+      state.user.kycRejectReason = "";
+      state.kycRecord = submission;
+      saveSharedMirror(true);
+
+      if (db) {
+        try {
+          await setDoc(doc(db, "kyc_submissions", state.user.uid), submission);
+          await setDoc(doc(db, "users", state.user.uid), {
+            uid: state.user.uid,
+            name: state.user.name,
+            email: state.user.email,
+            photoURL: state.user.photoURL,
+            kycStatus: "pending",
+            lastLoginAt: serverTimestamp()
+          }, { merge: true });
+        } catch (err) {
+          console.warn("Firestore KYC upload fallback:", err?.code || err?.message);
+        }
+      }
+
+      d.submitting = false;
+      d.resubmitting = false;
+      d.frontImg = "";
+      d.backImg = "";
+      d.selfieImg = "";
+      renderAll();
+      toast("National ID submitted! Status is now Pending Review.", "success");
+    }
+
+    /* =========================================================================
+       12. TAB 4: NON-CUSTODIAL WALLET (PORTFOLIO, DEPOSIT QR, FAUCET, SEND, TX)
+       ========================================================================= */
+    function renderWalletTab() {
+      const fMeta = getFiat(state.fiat);
+      let totalUSD = 0;
+      let lockedUSD = 0;
+
+      Object.keys(COINS).forEach(sym => {
+        const av = Number(state.wallet.balances[sym] || 0);
+        const lk = Number(state.wallet.locked[sym] || 0);
+        totalUSD += (av + lk) * COINS[sym].priceUSD;
+        lockedUSD += lk * COINS[sym].priceUSD;
+      });
+
+      return `
+        <div class="space-y-6">
+          <!-- Portfolio Hero -->
+          <section class="hero-glow border border-borderc rounded-3xl p-5 sm:p-7 shadow-card">
+            <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+              <div>
+                <div class="flex items-center gap-2 flex-wrap">
+                  <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-mint/15 border border-mint/35 text-mint text-[11px] font-extrabold">
+                    <span class="w-2 h-2 rounded-full bg-mint"></span>
+                    Non-Custodial Multi-Chain Wallet
+                  </span>
+                  <button type="button" onclick="window.wayones.copy('${esc(state.wallet.address)}', '0x Wallet Address Copied!')" class="px-2.5 py-1 rounded-full bg-obsidian border border-borderc font-mono text-[11px] text-muted hover:text-mint transition-colors">
+                    ${shortAddr(state.wallet.address)} ❐
+                  </button>
+                </div>
+                <div class="text-3xl sm:text-4xl font-extrabold text-crisp tabular-nums tracking-tight mt-3">
+                  ${fmtFiat(totalUSD * fMeta.rateUSD, state.fiat)}
+                </div>
+                <div class="text-xs text-muted mt-1 flex flex-wrap items-center gap-3 tabular-nums">
+                  <span>≈ ${fmtFiat(totalUSD, "USD")} USD</span>
+                  <span class="text-amber-300 font-semibold">Locked in Escrow: ${fmtFiat(lockedUSD * fMeta.rateUSD, state.fiat)}</span>
+                </div>
+              </div>
+
+              <div class="flex flex-wrap gap-2">
+                <button type="button" onclick="window.wayones.openDepositModal()" class="h-11 px-4 rounded-xl bg-mint hover:bg-mint-hover text-[#051B12] font-extrabold text-xs sm:text-sm shadow-mint">Deposit / QR</button>
+                <button type="button" onclick="window.wayones.openSendModal('USDT')" class="h-11 px-4 rounded-xl bg-panel hover:bg-borderc border border-borderc text-crisp font-bold text-xs sm:text-sm">Send Crypto</button>
+                <button type="button" onclick="window.wayones.claimFaucet()" class="h-11 px-4 rounded-xl bg-tealc/15 hover:bg-tealc border border-tealc/40 text-tealc hover:text-[#051B12] font-extrabold text-xs sm:text-sm transition-colors">+500 tUSDT Faucet</button>
+              </div>
+            </div>
+          </section>
+
+          <!-- Individual Coin Rows -->
+          <section>
+            <div class="flex items-center justify-between mb-3 px-1">
+              <h2 class="text-base font-extrabold text-crisp">Assets (8 Cryptocurrencies)</h2>
+              <span class="text-xs text-muted">Display: ${fMeta.code} (${fMeta.symbol})</span>
+            </div>
+            <div class="flex flex-col gap-2.5">
+              ${Object.keys(COINS).map(sym => {
+                const c = COINS[sym];
+                const av = Number(state.wallet.balances[sym] || 0);
+                const lk = Number(state.wallet.locked[sym] || 0);
+                const valFiat = (av + lk) * c.priceUSD * fMeta.rateUSD;
+                return `
+                  <div class="bg-card border border-borderc rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div class="flex items-center gap-3">
+                      ${cryptoLogoSvg(sym, 36)}
+                      <div>
+                        <div class="font-extrabold text-crisp text-sm">${sym} <span class="text-xs font-normal text-muted">— ${c.name}</span></div>
+                        <div class="text-xs text-muted tabular-nums">${fmtFiat(c.priceUSD * fMeta.rateUSD, state.fiat)} • ${c.defaultNet}</div>
+                      </div>
+                    </div>
+
+                    <div class="flex items-center justify-between sm:justify-end gap-4 pt-2 sm:pt-0 border-t sm:border-t-0 border-borderc">
+                      <div class="sm:text-right">
+                        <div class="text-sm font-extrabold text-crisp tabular-nums">${fmtCrypto(av, sym)} ${sym}</div>
+                        <div class="text-[11px] text-mint tabular-nums">${fmtFiat(valFiat, state.fiat)} ${lk > 0 ? `<span class="text-amber-300">(${fmtCrypto(lk, sym)} locked)</span>` : ""}</div>
+                      </div>
+                      <div class="flex items-center gap-1.5 shrink-0">
+                        <button type="button" onclick="window.wayones.openDepositModal('${c.defaultNet}')" class="h-9 px-3 rounded-xl bg-mint/15 hover:bg-mint text-mint hover:text-[#051B12] text-xs font-bold transition-colors">Deposit</button>
+                        <button type="button" onclick="window.wayones.openSendModal('${sym}')" class="h-9 px-3 rounded-xl bg-panel hover:bg-borderc border border-borderc text-crisp text-xs font-bold transition-colors">Send</button>
+                      </div>
+                    </div>
+                  </div>
+                `;
+              }).join("")}
+            </div>
+          </section>
+
+          <!-- Recent Transaction History -->
+          <section class="bg-card border border-borderc rounded-3xl p-5 space-y-3">
+            <h2 class="text-base font-extrabold text-crisp">Recent Wallet Activity</h2>
+            ${!state.wallet.transactions.length ? `
+              <p class="text-xs text-muted py-4 text-center">No wallet transactions yet. Click <strong>+500 tUSDT Faucet</strong> above to fund your wallet for instant P2P testing.</p>
+            ` : `
+              <div class="divide-y divide-borderc">
+                ${state.wallet.transactions.slice(0, 12).map(tx => {
+                  const isPositive = tx.type === "faucet" || tx.type === "deposit";
+                  return `
+                    <div class="py-3 flex items-center justify-between gap-3">
+                      <div class="flex items-center gap-3 min-w-0">
+                        ${cryptoLogoSvg(tx.crypto, 28)}
+                        <div class="min-w-0">
+                          <div class="text-xs sm:text-sm font-bold text-crisp truncate">${esc(tx.note)}</div>
+                          <div class="text-[11px] text-muted">${timeAgo(tx.createdAt)}</div>
+                        </div>
+                      </div>
+                      <div class="text-right shrink-0">
+                        <div class="text-xs sm:text-sm font-extrabold tabular-nums ${isPositive ? "text-mint" : "text-crisp"}">
+                          ${isPositive ? "+" : "-"}${fmtCrypto(tx.amount, tx.crypto)} ${tx.crypto}
+                        </div>
+                      </div>
+                    </div>
+                  `;
+                }).join("")}
+              </div>
+            `}
+          </section>
+        </div>
+      `;
+    }
+
+    function claimFaucet() {
+      state.wallet.balances.USDT = Number(((state.wallet.balances.USDT || 0) + 500).toFixed(2));
+      state.wallet.transactions.unshift({
+        id: makeId("TX"),
+        type: "faucet",
+        crypto: "USDT",
+        amount: 500,
+        note: "Testnet Faucet Credit (+500 tUSDT)",
+        createdAt: Date.now()
+      });
+      saveLocalWallet();
+      renderAll();
+      toast("+500 tUSDT credited to your Non-Custodial Wallet!", "success");
+    }
+
+    function openDepositModal(net = state.wallet.selectedNetwork) {
+      state.wallet.selectedNetwork = net;
+      const netAddr = deriveNetworkAddress(state.wallet.address, net);
+      openModal(`
+        <div class="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/80 backdrop-blur-sm" onclick="window.wayones.backdropClose(event)">
+          <div class="anim-in w-full sm:max-w-md bg-card border-t sm:border border-borderc rounded-t-3xl sm:rounded-3xl p-6 space-y-4 shadow-2xl" onclick="event.stopPropagation()">
+            <div class="flex items-center justify-between">
+              <div>
+                <h3 class="text-base font-extrabold text-crisp">Deposit Crypto</h3>
+                <p class="text-xs text-muted">Non-custodial on-device address</p>
+              </div>
+              <button type="button" onclick="window.wayones.closeModal()" class="w-9 h-9 rounded-xl bg-panel text-muted flex items-center justify-center">✕</button>
+            </div>
+
+            <div class="flex flex-wrap gap-1.5">
+              ${NETWORKS.map(n => `
+                <button type="button" onclick="window.wayones.openDepositModal('${n}')" class="px-3 py-1.5 rounded-xl text-xs font-bold border transition-colors ${
+                  n === net ? "bg-mint border-mint text-[#051B12]" : "bg-panel border-borderc text-muted hover:text-crisp"
+                }">${n}</button>
+              `).join("")}
+            </div>
+
+            <div class="flex flex-col items-center py-5 bg-obsidian border border-borderc rounded-2xl">
+              ${qrCodeSvg(`${net}:${netAddr}`)}
+              <span class="text-[11px] text-muted mt-3">Scan to deposit on <strong class="text-mint">${net}</strong></span>
+            </div>
+
+            <div class="bg-panel border border-borderc rounded-2xl p-3.5 flex items-center justify-between gap-2">
+              <div class="font-mono text-xs text-crisp break-all">${esc(netAddr)}</div>
+              <button type="button" onclick="window.wayones.copy('${esc(netAddr)}', '${net} Address Copied!')" class="h-9 px-3.5 rounded-xl bg-mint text-[#051B12] font-extrabold text-xs shrink-0">Copy</button>
+            </div>
+          </div>
+        </div>
+      `);
+    }
+
+    function openSendModal(symbol = "USDT") {
+      const bal = Number(state.wallet.balances[symbol] || 0);
+      openModal(`
+        <div class="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/80 backdrop-blur-sm" onclick="window.wayones.backdropClose(event)">
+          <div class="anim-in w-full sm:max-w-md bg-card border-t sm:border border-borderc rounded-t-3xl sm:rounded-3xl p-6 space-y-4 shadow-2xl" onclick="event.stopPropagation()">
+            <div class="flex items-center justify-between">
+              <h3 class="text-base font-extrabold text-crisp">Send ${symbol}</h3>
+              <button type="button" onclick="window.wayones.closeModal()" class="w-9 h-9 rounded-xl bg-panel text-muted flex items-center justify-center">✕</button>
+            </div>
+
+            <form onsubmit="window.wayones.submitSendCrypto(event)" class="space-y-3.5">
+              <div class="grid grid-cols-2 gap-2.5">
+                <div>
+                  <label class="block text-xs font-semibold text-crisp mb-1">Asset</label>
+                  <select id="snd-coin" onchange="window.wayones.openSendModal(this.value)" class="w-full h-11 px-3 rounded-xl bg-panel border border-borderc text-sm font-bold text-crisp">
+                    ${Object.keys(COINS).map(k => `<option value="${k}" ${k === symbol ? "selected" : ""}>${k}</option>`).join("")}
+                  </select>
+                </div>
+                <div>
+                  <label class="block text-xs font-semibold text-crisp mb-1">Network</label>
+                  <select id="snd-net" class="w-full h-11 px-3 rounded-xl bg-panel border border-borderc text-sm font-bold text-crisp">
+                    ${NETWORKS.map(n => `<option value="${n}" ${n === COINS[symbol].defaultNet ? "selected" : ""}>${n}</option>`).join("")}
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label class="block text-xs font-semibold text-crisp mb-1">Recipient Address *</label>
+                <input id="snd-addr" type="text" required minlength="20" placeholder="0x... / T... / UQ..." class="w-full h-11 px-3.5 rounded-xl bg-panel border border-borderc focus:border-mint focus:outline-none font-mono text-xs sm:text-sm text-crisp" />
+              </div>
+
+              <div>
+                <div class="flex items-center justify-between mb-1">
+                  <label class="text-xs font-semibold text-crisp">Amount (${symbol}) *</label>
+                  <span class="text-[11px] font-bold text-mint tabular-nums">Available: ${fmtCrypto(bal, symbol)} ${symbol}</span>
+                </div>
+                <input id="snd-amt" type="number" step="any" min="0.000001" required placeholder="0.00" class="w-full h-11 px-3.5 rounded-xl bg-panel border border-borderc focus:border-mint focus:outline-none text-sm font-bold text-crisp tabular-nums" />
+              </div>
+
+              <div id="snd-err" class="hidden p-3 rounded-xl bg-coral/15 border border-coral/40 text-xs text-red-200 font-semibold"></div>
+
+              <button type="submit" class="w-full h-12 rounded-2xl bg-mint hover:bg-mint-hover text-[#051B12] font-extrabold text-sm shadow-mint">Broadcast Transfer</button>
+            </form>
+          </div>
+        </div>
+      `);
+    }
+
+    function submitSendCrypto(e) {
+      e.preventDefault();
+      const coin = document.getElementById("snd-coin").value;
+      const net = document.getElementById("snd-net").value;
+      const addr = document.getElementById("snd-addr").value.trim();
+      const amt = parseFloat(document.getElementById("snd-amt").value);
+      const errEl = document.getElementById("snd-err");
+      const bal = Number(state.wallet.balances[coin] || 0);
+
+      if (isNaN(amt) || amt <= 0 || amt > bal) {
+        if (errEl) {
+          errEl.textContent = `Insufficient available ${coin} balance.`;
+          errEl.classList.remove("hidden");
+        }
+        return;
+      }
+
+      state.wallet.balances[coin] = Number((bal - amt).toFixed(8));
+      state.wallet.transactions.unshift({
+        id: makeId("TX"),
+        type: "send",
+        crypto: coin,
+        amount: amt,
+        note: `Sent ${coin} (${net}) to ${shortAddr(addr)}`,
+        createdAt: Date.now()
+      });
+      saveLocalWallet();
+      closeModal();
+      renderAll();
+      toast(`Sent ${fmtCrypto(amt, coin)} ${coin} to ${shortAddr(addr)}`, "success");
+    }
+
+    /* =========================================================================
+       13. TAB 5: PROFILE (GOOGLE AVATAR, VERIFIED GMAIL, UID, KYC TIER, STATS)
+       ========================================================================= */
+    function renderProfileTab() {
+      const u = state.user;
+      if (!u) {
+        return `
+          <div class="max-w-lg mx-auto bg-card border border-borderc rounded-3xl p-8 text-center mt-6 space-y-5 shadow-card">
+            <div class="w-16 h-16 mx-auto rounded-2xl brand-grad flex items-center justify-center shadow-mint">
+              <svg width="32" height="32" viewBox="0 0 28 28" fill="none"><path d="M4.5 9.2L8.4 19.6C8.8 20.6 10.2 20.6 10.6 19.6L13.5 12.6C13.7 12.1 14.3 12.1 14.5 12.6L17.4 19.6C17.8 20.6 19.2 20.6 19.6 19.6L23.5 9.2" stroke="#051B12" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </div>
+            <div>
+              <h2 class="text-xl font-extrabold text-crisp">Sign In to Your Wayones Profile</h2>
+              <p class="text-xs sm:text-sm text-muted mt-1 leading-relaxed">
+                Access your verified Gmail identity, live National ID status, P2P completion stats, and synced trades.
+              </p>
+            </div>
+            <button type="button" onclick="window.wayones.openAuthModal()" class="w-full max-w-xs mx-auto h-12 px-5 rounded-2xl bg-white hover:bg-slate-100 text-[#111827] font-bold text-sm flex items-center justify-center gap-3 shadow-lg transition-all">
+              ${googleGIconSvg(20)}
+              <span>Continue with Google</span>
+            </button>
+          </div>
+        `;
+      }
+
+      const completed = state.trades.filter(t => t.status === "released").length;
+      const active = state.trades.filter(t => ["escrow_locked", "paid", "disputed"].includes(t.status)).length;
+      const totalTrades = state.trades.length;
+      const compRate = totalTrades ? ((completed / totalTrades) * 100).toFixed(1) : "100.0";
+
+      const tierMap = {
+        verified:   { label: "Tier 2 — Verified Trader ✓", cls: "bg-mint/15 border-mint/45 text-mint" },
+        pending:    { label: "Tier 1 — KYC Pending Review", cls: "bg-amberc/15 border-amberc/45 text-amber-300" },
+        rejected:   { label: "Action Needed — KYC Rejected", cls: "bg-coral/15 border-coral/45 text-red-300" },
+        unverified: { label: "Tier 0 — Unverified Account", cls: "bg-panel border-borderc text-muted" }
+      };
+      const tier = tierMap[u.kycStatus] || tierMap.unverified;
+
+      return `
+        <div class="max-w-2xl mx-auto space-y-5">
+          <section class="hero-glow border border-borderc rounded-3xl p-5 sm:p-7 shadow-card">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div class="flex items-center gap-4 min-w-0">
+                ${renderAvatar(u.photoURL, u.name, "w-16 h-16 text-2xl")}
+                <div class="min-w-0">
+                  <h1 class="text-xl font-extrabold text-crisp truncate">${esc(u.name)}</h1>
+                  <div class="flex items-center gap-1.5 mt-1 flex-wrap">
+                    <span class="text-xs text-muted truncate">${esc(u.email)}</span>
+                    <span class="px-2 py-0.5 rounded-full bg-mint/15 border border-mint/35 text-mint text-[10px] font-extrabold">Verified Gmail</span>
+                  </div>
+                  <div class="mt-2">
+                    <span class="inline-flex items-center px-3 py-1 rounded-full border text-xs font-extrabold ${tier.cls}">${tier.label}</span>
+                  </div>
+                </div>
+              </div>
+              <button type="button" onclick="window.wayones.signOut()" class="h-10 px-4 rounded-xl bg-coral/15 hover:bg-coral border border-coral/45 text-red-200 hover:text-white font-extrabold text-xs transition-colors shrink-0 self-start sm:self-center">
+                Sign Out
+              </button>
+            </div>
+          </section>
+
+          <!-- Firebase UID & Non-Custodial Wallet -->
+          <section class="bg-card border border-borderc rounded-3xl p-5 space-y-3">
+            <div class="flex items-center justify-between gap-3 bg-obsidian border border-borderc rounded-2xl p-3.5">
+              <div class="min-w-0">
+                <div class="text-[10px] font-bold uppercase tracking-wider text-muted">Firebase User ID (UID)</div>
+                <div class="font-mono text-xs text-crisp truncate mt-0.5">${esc(u.uid)}</div>
+              </div>
+              <button type="button" onclick="window.wayones.copy('${esc(u.uid)}', 'UID Copied!')" class="h-8 px-3 rounded-lg bg-panel border border-borderc text-xs font-bold text-mint shrink-0">Copy</button>
+            </div>
+
+            <div class="flex items-center justify-between gap-3 bg-obsidian border border-borderc rounded-2xl p-3.5">
+              <div class="min-w-0">
+                <div class="text-[10px] font-bold uppercase tracking-wider text-muted">Non-Custodial 0x Wallet</div>
+                <div class="font-mono text-xs text-crisp truncate mt-0.5">${esc(state.wallet.address)}</div>
+              </div>
+              <button type="button" onclick="window.wayones.copy('${esc(state.wallet.address)}', 'Wallet Address Copied!')" class="h-8 px-3 rounded-lg bg-panel border border-borderc text-xs font-bold text-mint shrink-0">Copy</button>
+            </div>
+          </section>
+
+          <!-- P2P Stats -->
+          <section class="grid grid-cols-3 gap-3 text-center">
+            <div class="bg-card border border-borderc rounded-2xl p-4">
+              <div class="text-xl font-extrabold text-mint tabular-nums">${compRate}%</div>
+              <div class="text-[11px] text-muted mt-0.5">Completion Rate</div>
+            </div>
+            <div class="bg-card border border-borderc rounded-2xl p-4">
+              <div class="text-xl font-extrabold text-crisp tabular-nums">${completed}</div>
+              <div class="text-[11px] text-muted mt-0.5">Completed Trades</div>
+            </div>
+            <div class="bg-card border border-borderc rounded-2xl p-4">
+              <div class="text-xl font-extrabold text-tealc tabular-nums">${active}</div>
+              <div class="text-[11px] text-muted mt-0.5">Active Escrows</div>
+            </div>
+          </section>
+
+          <!-- Quick Action Card to Verify ID -->
+          <section class="bg-card border border-borderc rounded-3xl p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <h3 class="text-sm font-extrabold text-crisp">Identity Verification (KYC)</h3>
+              <p class="text-xs text-muted mt-0.5">
+                ${u.kycStatus === "verified" ? "Your National ID is approved and synced across Wayones." : "Submit your National ID to unlock Verified Trader status & higher limits."}
+              </p>
+            </div>
+            <button type="button" onclick="window.wayones.setTab('kyc')" class="h-11 px-5 rounded-xl bg-mint hover:bg-mint-hover text-[#051B12] font-extrabold text-xs shadow-mint shrink-0">
+              ${u.kycStatus === "verified" ? "View KYC Status" : "Go to Verify ID →"}
+            </button>
+          </section>
+        </div>
+      `;
+    }
+
+    /* =========================================================================
+       14. MASTER RENDER, MODAL HOST & PUBLIC EVENT BRIDGE
+       ========================================================================= */
+    function renderAll() {
+      updateChrome();
+      const root = document.getElementById("app-root");
+      if (!root) return;
+      if (state.tab === "market") root.innerHTML = renderMarketTab();
+      else if (state.tab === "trades") root.innerHTML = renderTradesTab();
+      else if (state.tab === "kyc") root.innerHTML = renderKycTab();
+      else if (state.tab === "wallet") root.innerHTML = renderWalletTab();
+      else if (state.tab === "profile") root.innerHTML = renderProfileTab();
+      else root.innerHTML = renderMarketTab();
+    }
+
+    function openModal(html) {
+      const root = document.getElementById("modal-root");
+      if (root) root.innerHTML = html;
+      document.body.style.overflow = "hidden";
+    }
+
+    function closeModal() {
+      const root = document.getElementById("modal-root");
+      if (root) root.innerHTML = "";
+      activeOfferForTrade = null;
+      document.body.style.overflow = "";
+    }
+
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape" && document.getElementById("modal-root")?.innerHTML.trim()) {
+        closeModal();
+      }
+    });
+
+    window.wayones = {
+      setTab(tab) {
+        state.tab = tab;
+        if (tab !== "trades") stopTradeCountdown();
+        renderAll();
+        if (tab === "trades" && state.openTradeId) startTradeCountdown(state.openTradeId);
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      },
+      handleHeaderAuth() {
+        if (state.user) this.setTab("profile");
+        else openAuthModal();
+      },
+      openAuthModal,
+      googleSignIn: triggerGoogleSignIn,
+      signOut: handleSignOut,
+      openCurrencyModal,
+      filterCurrencies(val) {
+        currencySearchVal = val;
+        const container = document.getElementById("fiat-list-container");
+        if (container) container.innerHTML = renderCurrencyListHtml();
+      },
+      pickCurrency(code) {
+        if (!FIATS[code]) return;
+        state.fiat = code;
+        state.market.paymentFilter = "ALL";
+        closeModal();
+        renderAll();
+        toast(`Currency switched to ${code} — ${FIATS[code].name}`, "info");
+      },
+      setMarketAction(action) { state.market.action = action; renderAll(); },
+      setMarketCrypto(sym) { state.market.crypto = sym; renderAll(); },
+      setPaymentFilter(pm) { state.market.paymentFilter = pm; renderAll(); },
+      setAmountFilter(val) { state.market.amountFilter = val; refreshMarketOffersList(); },
+      resetMarketFilters() { state.market.paymentFilter = "ALL"; state.market.amountFilter = ""; renderAll(); },
+      openPostOfferModal,
+      submitPostOffer,
+      openCreateTradeModal,
+      fillTradeFiat(val) {
+        const inp = document.getElementById("ct-fiat");
+        if (inp) { inp.value = Number(val).toFixed(2); this.syncTradeFiat(); }
+      },
+      syncTradeFiat() {
+        if (!activeOfferForTrade) return;
+        const f = parseFloat(document.getElementById("ct-fiat")?.value);
+        const cEl = document.getElementById("ct-crypto");
+        if (cEl) cEl.value = (!isNaN(f) && f >= 0) ? fmtCrypto(f / activeOfferForTrade.price, activeOfferForTrade.crypto) : "";
+      },
+      syncTradeCrypto() {
+        if (!activeOfferForTrade) return;
+        const c = parseFloat(document.getElementById("ct-crypto")?.value);
+        const fEl = document.getElementById("ct-fiat");
+        if (fEl) fEl.value = (!isNaN(c) && c >= 0) ? (c * activeOfferForTrade.price).toFixed(2) : "";
+      },
+      confirmTradeCreation,
+      setTradesFilter(f) { state.tradesFilter = f; renderAll(); },
+      openTradeRoom(id) { state.openTradeId = id; renderAll(); startTradeCountdown(id); },
+      closeTradeRoom() { state.openTradeId = null; stopTradeCountdown(); renderAll(); },
+      markAsPaid,
+      releaseEscrow,
+      cancelTrade,
+      sendTradeChat,
+      openDisputeModal,
+      setDisputeField(k, v) { state.disputeDraft[k] = v; },
+      handleDisputeProof,
+      clearDisputeProof() { state.disputeDraft.proofImg = ""; renderDisputeModal(); },
+      submitDispute,
+      setKycCountry(country) {
+        state.kycDraft.country = country;
+        const meta = KYC_COUNTRIES[country] || KYC_COUNTRIES["India"];
+        state.kycDraft.docType = meta.docs[0];
+        renderAll();
+      },
+      setKycDocType(docType) { state.kycDraft.docType = docType; renderAll(); },
+      setKycField(k, v) { state.kycDraft[k] = v; },
+      startKycResubmit() { state.kycDraft.resubmitting = true; renderAll(); },
+      handleKycPhoto,
+      clearKycPhoto(slot) { state.kycDraft[slot] = ""; renderAll(); },
+      submitKyc,
+      claimFaucet,
+      openDepositModal,
+      openSendModal,
+      submitSendCrypto,
+      copy: copyText,
+      closeModal,
+      backdropClose(e) { if (e.target === e.currentTarget) closeModal(); }
+    };
+
+    /* =========================================================================
+       15. APPLICATION BOOTSTRAP
+       ========================================================================= */
+    async function init() {
+      loadLocalWallet();
+      loadSharedMirror();
+
+      // Cross-tab BroadcastChannel + localStorage live sync with Admin Panel
+      try {
+        if ("BroadcastChannel" in window) {
+          bc = new BroadcastChannel(BROADCAST_NAME);
+          bc.onmessage = (ev) => {
+            if (ev?.data?.type === "DB_UPDATED") {
+              loadSharedMirror();
+              renderAll();
+            }
+          };
+        }
+      } catch {}
+
+      window.addEventListener("storage", (ev) => {
+        if (ev.key === SHARED_LS_KEY) {
+          loadSharedMirror();
+          renderAll();
+        }
+      });
+
+      // Handle Google Sign-In Redirect Result & Session Listener
+      if (auth) {
+        try {
+          const redir = await getRedirectResult(auth);
+          if (redir?.user) {
+            toast(`Signed in as ${redir.user.displayName || redir.user.email}`, "success");
+          }
+        } catch (err) {
+          console.warn("Redirect auth check notice:", err?.code || err?.message);
+        }
+
+        onAuthStateChanged(auth, (fbUser) => {
+          state.authReady = true;
+          syncFirebaseUserAndListen(fbUser);
+        });
+      }
+
+      attachGlobalFirestoreListeners();
+      renderAll();
+    }
+
+    init();
